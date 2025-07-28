@@ -10,7 +10,9 @@
     test_rotation_generation
     test_Cayley_graph
     test_CycleDecomposition
+    test_DiscreteActionSymSignature
     test_DiscreteActionSymSignature_CayleyGraph
+    test_DiscreteActionSymSignature_generator
 
 """
 
@@ -162,6 +164,82 @@ Tests:
         assert nneigh == nsym
         
 @ParametrizeDocstrings
+@pytest.mark.parametrize("n", Dense_linalg_dims)
+def test_CycleDecomposition(n):
+    """ Tests properties of cycle decomposition of permutations.
+    """
+
+    perm = np.random.permutation(n).astype(np.intp)
+    cycles = choreo.ActionSym.CycleDecomposition(perm)
+    
+    m = 0
+    for cycle in cycles:
+        m += len(cycle)
+    
+    assert m == n
+    
+    for cycle in cycles:
+        
+        m = len(cycle)
+        
+        i = 0
+        p = cycle[0]
+        
+        for _ in range(n): # Overkill
+            
+            i = (i+1) % m
+            q = cycle[i]
+            
+            assert perm[p] == q
+            
+            p = q
+      
+@ParametrizeDocstrings
+@pytest.mark.parametrize("Sym_list", [pytest.param(Sym_list, id=name) for name, Sym_list in SymList_dict.items()])
+def test_DiscreteActionSymSignature(Sym_list, float64_tols):
+    """ Tests properties of DiscreteActionSymSignature.
+    
+        Tests that going back and forth from ActionSym to DiscreteActionSymSignature is idempotent.
+        Tests that computed order satisfies the definition
+
+    """
+
+    for Sym in Sym_list:
+
+        SymSig = Sym.signature
+        
+        print(SymSig)
+        assert SymSig.IsWellFormed(atol = float64_tols.atol)
+        
+        Symp = SymSig.ActionSym
+        
+        assert Sym.IsSame(Symp, atol=float64_tols.atol)
+        
+        geodim = Sym.geodim
+        new_basis = choreo.ActionSym.SurjectiveDirectSpaceRot(np.random.random(geodim*(geodim-1)//2))
+        SymSig.basis = new_basis
+        
+        Symp = SymSig.ActionSym
+        SymSigp = Symp.signature
+        
+        print(SymSigp)
+        assert SymSigp.IsWellFormed(atol = float64_tols.atol)
+        assert SymSig == SymSigp
+
+        order = SymSig.order
+        
+        Id = choreo.ActionSym.Identity(nbody = Sym.nbody, geodim = Sym.geodim)
+        Sym_n = choreo.ActionSym.Identity(nbody = Sym.nbody, geodim = Sym.geodim)
+        
+        for i in range(order-1):
+            
+            Sym_n = Sym_n * Sym
+            assert not Id.IsSame(Sym_n, atol=float64_tols.atol)
+
+        Sym_n = Sym_n * Sym
+        assert Id.IsSame(Sym_n, atol=float64_tols.atol)
+
+@ParametrizeDocstrings
 @pytest.mark.parametrize("Sym_list", [pytest.param(Sym_list, id=name) for name, Sym_list in SymList_dict.items()])
 def test_DiscreteActionSymSignature_CayleyGraph(Sym_list):
     """ Tests that all signatures in a Cayley graph are unique.
@@ -199,63 +277,11 @@ def test_DiscreteActionSymSignature_CayleyGraph(Sym_list):
             assert all_signatures[i] != all_signatures[j]
         
 @ParametrizeDocstrings
-@pytest.mark.parametrize("Sym_list", [pytest.param(Sym_list, id=name) for name, Sym_list in SymList_dict.items()])
-def test_DiscreteActionSymSignature(Sym_list, float64_tols):
-    """ Tests properties of DiscreteActionSymSignature.
-    
-        Tests that going back and forth from ActionSym to DiscreteActionSymSignature is idempotent.
+def test_DiscreteActionSymSignature_generator(float64_tols):
+    """ Tests properties of DirectTimeSignatures generation.
 
     """
+        
+    for SymSig in choreo.DiscreteActionSymSignature.DirectTimeSignatures(nbody=2, geodim=6, max_order=10):
 
-    for Sym in Sym_list:
-
-        SymSig = Sym.signature
-        
-        assert SymSig.IsWellFormed
-        
-        Symp = SymSig.ActionSym
-        
-        assert Sym.IsSame(Symp, atol=float64_tols.atol)
-        
-        geodim = Sym.geodim
-        new_basis = choreo.ActionSym.SurjectiveDirectSpaceRot(np.random.random(geodim*(geodim-1)//2))
-        SymSig.basis = new_basis
-        
-        Symp = SymSig.ActionSym
-        SymSigp = Symp.signature
-        
-        assert SymSigp.IsWellFormed
-        assert SymSig == SymSigp
-
-@ParametrizeDocstrings
-@pytest.mark.parametrize("n", Dense_linalg_dims)
-def test_CycleDecomposition(n):
-    """ Tests properties of cycle decomposition of permutations.
-    """
-
-    perm = np.random.permutation(n).astype(np.intp)
-    cycles = choreo.ActionSym.CycleDecomposition(perm)
-    
-    m = 0
-    for cycle in cycles:
-        m += len(cycle)
-    
-    assert m == n
-    
-    for cycle in cycles:
-        
-        m = len(cycle)
-        
-        i = 0
-        p = cycle[0]
-        
-        for _ in range(n): # Overkill
-            
-            i = (i+1) % m
-            q = cycle[i]
-            
-            assert perm[p] == q
-            
-            p = q
-      
-            
+        assert SymSig.IsWellFormed(atol = float64_tols.atol)

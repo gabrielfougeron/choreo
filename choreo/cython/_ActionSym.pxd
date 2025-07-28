@@ -26,7 +26,7 @@ cdef class DiscreteActionSymSignature():
 
     cdef double[:,::1] _basis
 
-    # cpdef ActionSym to_ActionSym(self, double[:,::1] basis = *)
+    cpdef bint IsWellFormed(DiscreteActionSymSignature self, double atol = *)
 
 
 @cython.final

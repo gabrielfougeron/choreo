@@ -113,7 +113,11 @@ def DecomposeRotation(Mat, eps=1e-12):
         
         if is_dim1:
             
-            cs_angles[i] = np.sign(eigvals_r[i,i]) # +/- 1
+            if eigvals_r[i,i] > 0:        
+                cs_angles[i] = 1
+            else:
+                cs_angles[i] = -1
+            
             subspace_dim.append(1)
             i += 1
             

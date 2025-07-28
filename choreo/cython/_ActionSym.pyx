@@ -21,6 +21,7 @@ import networkx
 import itertools
 import string
 import fractions
+import math
 
 @cython.cdivision(True)
 cdef Py_ssize_t gcd (Py_ssize_t a, Py_ssize_t b) noexcept nogil:
@@ -75,11 +76,7 @@ cdef class DiscreteActionSymSignature():
         self.TimeRev = TimeRev
         self.TimeShiftNum = TimeShiftNum
         self.TimeShiftDen = TimeShiftDen
-
-        if basis is None:
-            self._basis = np.identity(self._SpaceRotSig.shape[0])
-        else:
-            self._basis = basis
+        self._basis = basis
 
     def __eq__(DiscreteActionSymSignature self, DiscreteActionSymSignature other):
         """
@@ -145,15 +142,99 @@ cdef class DiscreteActionSymSignature():
         return self.__str__()
 
     @cython.final
-    @property
-    def IsWellFormed(DiscreteActionSymSignature self):
+    cpdef bint IsWellFormed(DiscreteActionSymSignature self, double atol = default_atol):
         """:class:`python:bool` Whether the signature is well-formed.
 
-        TODO
+        This function will return :data:`python:True` if and only if **all** the following constraints are satisfied:
 
-        """       
+        * TimeShift = :attr:`TimeShiftNum` / :attr:`TimeShiftDen`  is an irreducible fraction in :math:`[0,1[`.
+        * :attr:`BodyPerm` defines a permutation of [0, ..., n-1], where n = :attr:`BodyPerm`.shape(0).
+        * :attr:`SpaceRot` is an orthogonal matrix.
+
         
-        return True
+        Parameters
+        ----------
+        atol : :class:`python:float`, optional
+            Absolute tolerance for the orthogonality test.
+
+        """     
+
+        cdef bint res = True
+        cdef Py_ssize_t i,j,k
+        cdef double dot
+        cdef Py_ssize_t num, den
+        cdef Py_ssize_t last_num, last_den
+
+        cdef double[:,::1] basis
+
+        res = res and (self.TimeRev != 0)
+        res = res and (self.TimeShiftNum >= 0)
+        res = res and (self.TimeShiftDen >  0)
+        res = res and (self.TimeShiftNum <  self.TimeShiftDen)
+
+        for i in range(self._BodyPerm.shape[0]):
+
+            res = res and (self._BodyPerm[i] >= 0) 
+            res = res and (self._BodyPerm[i] < self._BodyPerm.shape[0]) 
+
+        unique_perm = np.unique(np.asarray(self._BodyPerm))
+        res = res and (unique_perm.shape[0] == self._BodyPerm.shape[0])
+
+        res = res and (2*self.n2DBlocks <= self._SpaceRotSig.shape[0])
+
+        if not res:
+            return res
+
+        if self.n2DBlocks > 0:
+
+            last_num = self._SpaceRotSig[0]
+            last_den = self._SpaceRotSig[1]
+
+            res = res and (last_num >= 0)
+            res = res and (last_den >  0)
+            res = res and (last_num <  last_den) # Can be more than a half turn
+
+            for i in range(1,self.n2DBlocks):
+                
+                num = self._SpaceRotSig[2*i  ]
+                den = self._SpaceRotSig[2*i+1]
+
+                res = res and (num >= 0)
+                res = res and (den >  0)
+                res = res and (num <  2*den) # Should be less than a half turn !
+
+                res = res and (last_den * num <= last_num * den)
+
+                last_num = num
+                last_den = den
+
+        last_num = 1
+        for i in range(2*self.n2DBlocks,self._SpaceRotSig.shape[0]):
+
+            res = res and ((self._SpaceRotSig[i] == 1) or (self._SpaceRotSig[i] == -1))
+            res = res and (self._SpaceRotSig[i] <= last_num)
+            last_num = self._SpaceRotSig[i]
+
+        basis = self.basis
+
+        res = res and (self._SpaceRotSig.shape[0] == basis.shape[0])
+        res = res and (self._SpaceRotSig.shape[0] == basis.shape[1])
+
+        if not res:
+            return res
+
+        for i in range(basis.shape[0]):
+            for j in range(basis.shape[0]):
+                dot = 0.
+                for k in range(basis.shape[0]):
+                    dot += basis[i,k] * basis[j,k]
+
+                if i == j :
+                    res = res and (cfabs(dot - 1.) < atol)
+                else:
+                    res = res and (cfabs(dot) < atol)
+
+        return res
 
     @cython.final
     @property
@@ -189,7 +270,10 @@ cdef class DiscreteActionSymSignature():
         """
         TODO
         """
-        return np.asarray(self._basis)
+        if self._basis is None:
+            return np.identity(self._SpaceRotSig.shape[0])
+        else:
+            return np.asarray(self._basis)
 
     @basis.setter
     @cython.cdivision(True)
@@ -206,7 +290,8 @@ cdef class DiscreteActionSymSignature():
     @property
     def ActionSym(DiscreteActionSymSignature self):
         """
-    
+
+        TODO
 
         Example
         -------
@@ -224,6 +309,7 @@ cdef class DiscreteActionSymSignature():
 
         cdef Py_ssize_t geodim = self._SpaceRotSig.shape[0]
 
+        cdef double[:,::1] basis = self.basis
         cdef double[:,::1] SpaceRot = np.zeros((geodim, geodim), dtype=np.float64)
         cdef double angle, c, s
 
@@ -233,33 +319,33 @@ cdef class DiscreteActionSymSignature():
         i = 0
         for d in range(self.n2DBlocks):
 
-            angle = ctwopi * self.SpaceRotSig[i] / self.SpaceRotSig[i+1]
+            angle = (ctwopi * self._SpaceRotSig[i]) / self._SpaceRotSig[i+1]
             c = ccos(angle)
             s = csin(angle)
 
             for idim in range(geodim):
                 for jdim in range(geodim):
 
-                    SpaceRot[idim,jdim] += c*(self._basis[i  ,idim]*self._basis[i,jdim] + self._basis[i+1,idim]*self._basis[i+1,jdim])
-                    SpaceRot[idim,jdim] += s*(self._basis[i+1,idim]*self._basis[i,jdim] - self._basis[i  ,idim]*self._basis[i+1,jdim])
+                    SpaceRot[idim,jdim] += c*(basis[i  ,idim]*basis[i,jdim] + basis[i+1,idim]*basis[i+1,jdim])
+                    SpaceRot[idim,jdim] += s*(basis[i+1,idim]*basis[i,jdim] - basis[i  ,idim]*basis[i+1,jdim])
 
             i += 2
 
         for d in range(geodim - 2*self.n2DBlocks):
 
-            if self.SpaceRotSig[i] > 0:
+            if self._SpaceRotSig[i] > 0:
 
                 for idim in range(geodim):
                     for jdim in range(geodim):
 
-                        SpaceRot[idim,jdim] += self._basis[i,idim]*self._basis[i,jdim]
+                        SpaceRot[idim,jdim] += basis[i,idim]*basis[i,jdim]
 
             else:
 
                 for idim in range(geodim):
                     for jdim in range(geodim):
 
-                        SpaceRot[idim,jdim] -= self._basis[i,idim]*self._basis[i,jdim]
+                        SpaceRot[idim,jdim] -= basis[i,idim]*basis[i,jdim]
 
             i += 1
 
@@ -270,6 +356,114 @@ cdef class DiscreteActionSymSignature():
             self.TimeShiftNum       ,
             self.TimeShiftDen       ,
         )
+
+    @cython.final
+    @cython.cdivision(True)
+    @property
+    def order(DiscreteActionSymSignature self):
+
+        cdef list cycle
+        cdef list all_orders = []
+        cdef list perm_cycles = ActionSym.CycleDecomposition(self._BodyPerm)
+        
+        for cycle in perm_cycles:
+            all_orders.append(len(cycle))
+
+        if self.TimeRev > 0:
+            all_orders.append(self.TimeShiftDen)
+        else:
+            all_orders.append(2)
+
+        cdef Py_ssize_t i
+
+        for i in range(self.n2DBlocks):
+            all_orders.append(self._SpaceRotSig[2*i+1])
+        
+        for i in range(2*self.n2DBlocks, self._SpaceRotSig.shape[0]):
+            if self._SpaceRotSig[i] < 0:
+                all_orders.append(2)
+                break
+
+        return math.lcm(*all_orders)
+
+    @cython.final
+    @cython.cdivision(True)
+    @staticmethod
+    def DirectTimeSignatures(Py_ssize_t nbody, Py_ssize_t geodim, Py_ssize_t max_order):
+
+        cdef list all_fracs = list(ActionSym.TimeShifts(max_order))
+        cdef list all_rots_angles = all_fracs.copy()
+
+        nhalf = len(all_rots_angles) // 2 - 1
+
+        all_rots_angles.pop(0)     # No identity in 2D blocks
+        all_rots_angles.pop(nhalf) # No half turns in 2D blocks
+
+        cdef list first_half_rots_angles = all_rots_angles[:nhalf]
+        cdef list second_half_rots_angles = all_rots_angles[nhalf:]
+
+        cdef tuple rot_sigs
+
+        cdef Py_ssize_t max_n2DBlocks = geodim // 2
+        cdef Py_ssize_t max_n_half_turns
+
+        cdef Py_ssize_t order
+        cdef Py_ssize_t i
+        cdef Py_ssize_t n2DBlocks, TimeShiftNum, TimeShiftDen
+        cdef Py_ssize_t[::1] BodyPerm
+        cdef Py_ssize_t[::1] SpaceRotSig = np.empty(geodim, dtype=np.intp)
+
+        cdef DiscreteActionSymSignature SymSig 
+
+        for BodyPerm in ActionSym.Permutations(nbody):
+            for TimeShiftNum, TimeShiftDen in ActionSym.TimeShifts(max_order):
+
+                for n2DBlocks in range(max_n2DBlocks+1):
+
+                    n1DBlocks = geodim - 2*n2DBlocks
+                    max_n_half_turns = n1DBlocks // 2
+
+                    if n2DBlocks == 0:
+                        rot_sigs_iterator = [tuple()]
+                    elif n2DBlocks == 1:
+                        rot_sigs_iterator = itertools.product(all_rots_angles, repeat=1)
+                    else:
+                        rot_sigs_iterator = itertools.chain(
+                            itertools.combinations_with_replacement(first_half_rots_angles, n2DBlocks)  ,
+                            (tuple([*y,x]) for x in second_half_rots_angles for y in itertools.combinations_with_replacement(first_half_rots_angles, n2DBlocks-1))
+                        )
+
+                    for rot_sigs in rot_sigs_iterator:
+
+                        for i in range(n2DBlocks):
+                            SpaceRotSig[2*i  ] = rot_sigs[n2DBlocks-1-i][0]
+                            SpaceRotSig[2*i+1] = rot_sigs[n2DBlocks-1-i][1]
+
+                        for n_half_turns in range(max_n_half_turns+1):
+
+                            for i in range(2*n2DBlocks, geodim-2*n_half_turns):
+                                SpaceRotSig[i] = 1
+                            for i in range(geodim-2*n_half_turns,geodim):
+                                SpaceRotSig[i] = -1
+
+                            SymSig = DiscreteActionSymSignature(
+                                BodyPerm    ,
+                                SpaceRotSig ,
+                                n2DBlocks   ,
+                                1           ,
+                                TimeShiftNum,
+                                TimeShiftDen
+                            )
+
+                            order = SymSig.order
+                            
+                            # print(SymSig)
+                            # print(f'{order = }')
+                            # assert SymSig.IsWellFormed()
+
+                            if order <= max_order:
+
+                                yield SymSig
 
 @cython.auto_pickle(False)
 @cython.final
@@ -718,6 +912,7 @@ cdef class ActionSym():
         cdef Py_ssize_t i, j,k
         cdef double dot
 
+        res = res and (self.TimeRev != 0)
         res = res and (self.TimeShiftNum >= 0)
         res = res and (self.TimeShiftDen >  0)
         res = res and (self.TimeShiftNum <  self.TimeShiftDen)
@@ -731,6 +926,9 @@ cdef class ActionSym():
         res = res and (unique_perm.shape[0] == self._BodyPerm.shape[0])
 
         res = res and (self._SpaceRot.shape[0] == self._SpaceRot.shape[1])
+
+        if not res:
+            return res
 
         for i in range(self._SpaceRot.shape[0]):
             for j in range(self._SpaceRot.shape[0]):
@@ -1361,8 +1559,6 @@ cdef class ActionSym():
         cdef double angle
         cdef double[::1] angles = np.empty((subspace_dim.shape[0]), dtype=np.float64)
         cdef Py_ssize_t[::1] idim_arr = np.empty((subspace_dim.shape[0]), dtype=np.intp)
-
-        cdef Py_ssize_t nrefl = 0
 
         n2DBlocks = 0
 
