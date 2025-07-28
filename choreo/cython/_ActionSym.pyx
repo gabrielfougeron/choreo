@@ -38,6 +38,21 @@ cdef double default_atol = 1e-10
 @cython.auto_pickle(False)
 @cython.final
 cdef class DiscreteActionSymSignature():
+    r"""This class defines discrete signatures of the symmetries in a N-body system.
+    
+    TODO
+
+    .. math::
+        R = P^T \begin{bmatrix}
+        \begin{matrix}R_1 & & \\ & \ddots & \\ & & R_{\text{n2DBlocks}}\end{matrix} & 0 & 0\\
+        0  & \mathrm{I}_{\text{n1DBlocksPos}} & 0 \\
+        0 & 0 & -\mathrm{I}_{\text{n1DBlocksNeg}}
+        \end{bmatrix} P
+
+    where :math:`\text{n2DBlocks} + \text{n1DBlocksPos} + \text{n1DBlocksNeg} = \text{geodim}`
+
+    """
+    
 
     @cython.cdivision(True)
     def __init__(
@@ -66,7 +81,7 @@ cdef class DiscreteActionSymSignature():
         else:
             self._basis = basis
 
-    def __eq__(self, DiscreteActionSymSignature other):
+    def __eq__(DiscreteActionSymSignature self, DiscreteActionSymSignature other):
         """
         TODO
 
@@ -98,7 +113,7 @@ cdef class DiscreteActionSymSignature():
         return eq_possible
 
     @cython.final
-    def __str__(self):
+    def __str__(DiscreteActionSymSignature self):
 
         cdef Py_ssize_t i, d
 
@@ -131,16 +146,10 @@ cdef class DiscreteActionSymSignature():
 
     @cython.final
     @property
-    def IsWellFormed(ActionSym self):
-        """Returns :data:`python:True` if the signature is well-formed.
-
-        This function will return :data:`python:True` if and only if **all** the following constraints are satisfied:
+    def IsWellFormed(DiscreteActionSymSignature self):
+        """:class:`python:bool` Whether the signature is well-formed.
 
         TODO
-
-        Returns
-        -------
-        :class:`python:bool`
 
         """       
         
@@ -148,35 +157,35 @@ cdef class DiscreteActionSymSignature():
 
     @cython.final
     @property
-    def BodyPerm(self):
+    def BodyPerm(DiscreteActionSymSignature self):
         """:class:`numpy:numpy.ndarray`:class:`(shape = (nbody), dtype = np.intp)` Permutation of the bodies.
         """
         return np.asarray(self._BodyPerm)
 
     @cython.final
     @property
-    def nbody(self):
+    def nbody(DiscreteActionSymSignature self):
         """:class:`python:int` Number of bodies
         """
         return self._BodyPerm.shape[0]
 
     @cython.final
     @property
-    def SpaceRotSig(self):
+    def SpaceRotSig(DiscreteActionSymSignature self):
         """ :class:`numpy:numpy.ndarray`:class:`(shape = (geodim), dtype = np.intp)` Signature of space isometry.
         """
         return np.asarray(self._SpaceRotSig)
 
     @cython.final
     @property
-    def geodim(self):
+    def geodim(DiscreteActionSymSignature self):
         """:class:`python:int` Number of dimensions of space.
         """
         return self._SpaceRotSig.shape[0]
 
     @cython.final
     @property
-    def basis(self):
+    def basis(DiscreteActionSymSignature self):
         """
         TODO
         """
@@ -185,7 +194,7 @@ cdef class DiscreteActionSymSignature():
     @basis.setter
     @cython.cdivision(True)
     @cython.final
-    def basis(self, double[:,::1] new_basis):
+    def basis(DiscreteActionSymSignature self, double[:,::1] new_basis):
 
         assert self._SpaceRotSig.shape[0] == new_basis.shape[0]
         assert self._SpaceRotSig.shape[0] == new_basis.shape[1]
@@ -195,9 +204,22 @@ cdef class DiscreteActionSymSignature():
     @cython.final
     @cython.cdivision(True)
     @property
-    def ActionSym(self):
+    def ActionSym(DiscreteActionSymSignature self):
         """
-        TODO
+    
+
+        Example
+        -------
+
+        >>> import numpy as np
+        >>> import choreo
+        >>>
+        >>> Sym = choreo.ActionSym.Random(nbody = 10, geodim = 4)
+        >>> print(Sym.signature.ActionSym == Sym)
+        True
+
+
+
         """
 
         cdef Py_ssize_t geodim = self._SpaceRotSig.shape[0]
@@ -278,28 +300,28 @@ cdef class ActionSym():
 
     @cython.final
     @property
-    def BodyPerm(self):
+    def BodyPerm(ActionSym self):
         """:class:`numpy:numpy.ndarray`:class:`(shape = (nbody), dtype = np.intp)` Permutation of the bodies.
         """
         return np.asarray(self._BodyPerm)
 
     @cython.final
     @property
-    def nbody(self):
+    def nbody(ActionSym self):
         """:class:`python:int` Number of bodies
         """
         return self._BodyPerm.shape[0]
 
     @cython.final
     @property
-    def SpaceRot(self):
+    def SpaceRot(ActionSym self):
         """ :class:`numpy:numpy.ndarray`:class:`(shape = (geodim,geodim), dtype = np.float64)` Isometry of space.
         """
         return np.asarray(self._SpaceRot)
 
     @cython.final
     @property
-    def geodim(self):
+    def geodim(ActionSym self):
         """:class:`python:int` Number of dimensions of space.
         """
         return self._SpaceRot.shape[0]
@@ -307,7 +329,7 @@ cdef class ActionSym():
     @cython.final
     @cython.cdivision(True)
     def __init__(
-        self                        ,
+        ActionSym self              ,
         Py_ssize_t[::1] BodyPerm    ,
         double[:,::1] SpaceRot      ,
         Py_ssize_t TimeRev          ,
@@ -328,6 +350,33 @@ cdef class ActionSym():
             Numerator of the rational time shift.
         TimeShiftDen : :class:`python:int`
             Denominator of the rational time shift.
+
+        Example
+        -------
+
+        >>> import numpy as np
+        >>> import choreo
+        >>>
+        >>> angle = 2*np.pi * 1/5
+        >>> c = np.cos(angle)
+        >>> s = np.sin(angle)
+        >>>
+        >>> Sym = choreo.ActionSym(
+        ...     BodyPerm = np.array([0,1,2], dtype=np.intp)             ,
+        ...     SpaceRot = np.array([[c,-s],[s,c]], dtype=np.float64)   ,
+        ...     TimeRev = 1                                             ,
+        ...     TimeShiftNum = 0                                        ,
+        ...     TimeShiftDen = 1                                        ,
+        ... )
+        >>> print(Sym)
+        ActionSym object
+        BodyPerm: [0 1 2]
+        SpaceRot:
+        [[ 0.30901699 -0.95105652]
+        [ 0.95105652  0.30901699]]
+        TimeRev: 1
+        TimeShift: 0 / 1
+
         """    
 
         cdef Py_ssize_t den
@@ -357,8 +406,7 @@ cdef class ActionSym():
     def __str__(self):
 
         out  = "ActionSym object\n"
-        out += f"BodyPerm:\n"
-        out += f"{self.BodyPerm}\n"
+        out += f"BodyPerm: {self.BodyPerm}\n"
         out += f"SpaceRot:\n"
         out += f"{self.SpaceRot}\n"
         out += f"TimeRev: {self.TimeRev}\n"
@@ -367,16 +415,16 @@ cdef class ActionSym():
         return out
 
     @cython.final
-    def __repr__(self):
+    def __repr__(ActionSym self):
         return self.__str__()
 
     @cython.final
-    def __format__(self, format_spec):
+    def __format__(ActionSym self, format_spec):
         return self.__str__()
     
     @cython.final
     @staticmethod
-    def FromDict(Sym_dict):
+    def FromDict(dict Sym_dict):
         """Returns a new :class:`choreo.ActionSym` from a :class:`python:dict`.
 
         This is a helper function designed to facilitate loading symmetries from configuration and solution files.
@@ -400,14 +448,16 @@ cdef class ActionSym():
                 TimeRev = 1
             else:
                 raise ValueError('TimeRev given as a string must be "True" or "False"')
-
-        return ActionSym(
+        
+        cdef ActionSym Sym = ActionSym(
             np.array(Sym_dict["BodyPerm"], dtype=np.intp   )    ,
             np.array(Sym_dict["SpaceRot"], dtype=np.float64)    ,
             TimeRev                                             ,
             Sym_dict["TimeShiftNum"]                            ,
             Sym_dict["TimeShiftDen"]                            ,
         )
+
+        return Sym
 
     @cython.final
     @staticmethod
@@ -418,14 +468,15 @@ cdef class ActionSym():
         -------
 
         >>> import choreo
+        >>>
         >>> nbody = 10
         >>> geodim = 4
         >>> choreo.ActionSym.Identity(nbody, geodim).IsIdentity()
         True
+        >>>
         >>> print(choreo.ActionSym.Identity(nbody, geodim))
         ActionSym object
-        BodyPerm:
-        [0 1 2 3 4 5 6 7 8 9]
+        BodyPerm: [0 1 2 3 4 5 6 7 8 9]
         SpaceRot:
         [[1. 0. 0. 0.]
         [0. 1. 0. 0.]
@@ -447,13 +498,15 @@ cdef class ActionSym():
             An identity transformation of a system of ``nbody`` point masses in dimension ``geodim``.
         """          
 
-        return ActionSym(
+        cdef ActionSym Id = ActionSym(
             BodyPerm  = np.array(range(nbody), dtype = np.intp) ,
             SpaceRot  = np.identity(geodim, dtype = np.float64) ,
             TimeRev   = 1                                       ,
             TimeShiftNum = 0                                    ,
             TimeShiftDen = 1                                    ,
         )
+
+        return Id
 
     @cython.final
     @staticmethod
@@ -492,13 +545,15 @@ cdef class ActionSym():
         den = np.random.randint(low = 1, high = maxden)
         num = np.random.randint(low = 0, high =    den)
 
-        return ActionSym(
+        cdef ActionSym Sym = ActionSym(
             BodyPerm = perm     ,
             SpaceRot = rotmat   ,
             TimeRev = timerev   ,
             TimeShiftNum = num  ,
             TimeShiftDen = den  ,
         )
+
+        return Sym
 
     @cython.final
     cpdef ActionSym Inverse(ActionSym self):
@@ -510,9 +565,7 @@ cdef class ActionSym():
         -------
 
         >>> import choreo
-        >>> nbody = 10
-        >>> geodim = 4
-        >>> A = choreo.ActionSym.Random(nbody, geodim)
+        >>> A = choreo.ActionSym.Random(nbody = 10, geodim = 4)
         >>> A.Inverse().Compose(A).IsIdentity()
         True
 
@@ -527,13 +580,15 @@ cdef class ActionSym():
         for ib in range(self._BodyPerm.shape[0]):
             InvPerm[self._BodyPerm[ib]] = ib
 
-        return ActionSym(
+        cdef ActionSym InvSym = ActionSym(
             BodyPerm = InvPerm                                  ,
             SpaceRot = self._SpaceRot.T.copy()                  ,
             TimeRev = self.TimeRev                              ,         
             TimeShiftNum = - self.TimeRev * self.TimeShiftNum   ,
             TimeShiftDen = self.TimeShiftDen                    ,
         )
+
+        return InvSym
 
     @cython.final
     cpdef ActionSym TimeDerivative(ActionSym self):
@@ -553,7 +608,7 @@ cdef class ActionSym():
             for j in range(SpaceRot.shape[1]):
                 SpaceRot[i, j] *= self.TimeRev
 
-        return ActionSym(
+        cdef ActionSym Sym = ActionSym(
             BodyPerm = self._BodyPerm.copy()    ,
             SpaceRot = SpaceRot                 ,
             TimeRev = self.TimeRev              ,         
@@ -561,12 +616,32 @@ cdef class ActionSym():
             TimeShiftDen = self.TimeShiftDen    ,
         )
 
+        return Sym
+
+    @cython.final
+    def __mul__(ActionSym B, ActionSym A):
+        """ Returns the composition of two transformations.
+
+        ``B * A`` returns the composition :math:`B \circ A`, i.e. the result of applying ``A`` then ``B``.
+
+        Parameters
+        ----------
+        B, A : :class:`choreo.ActionSym`
+            Input transformation.
+
+        Returns
+        -------
+        :class:`choreo.ActionSym`
+            The composition of the input transformations.
+        """
+        return B.Compose(A)
+
     @cython.final
     @cython.cdivision(True)
     cpdef ActionSym Compose(ActionSym B, ActionSym A):
         """ Returns the composition of two transformations.
 
-        ``B.Compose(A)`` returns the composition :math:`B \circ A`, i.e. applies ``A`` then ``B``.
+        ``B.Compose(A)`` returns the composition :math:`B \circ A`, i.e. the result of applying ``A`` then ``B``.
 
         Parameters
         ----------
@@ -579,7 +654,7 @@ cdef class ActionSym():
             The composition of the input transformations.
         """
 
-        cdef Py_ssize_t[::1] ComposeBodyPerm = np.zeros(B._BodyPerm.shape[0], dtype = np.intp)
+        cdef Py_ssize_t[::1] ComposeBodyPerm = np.empty(B._BodyPerm.shape[0], dtype = np.intp)
         cdef Py_ssize_t ib
         for ib in range(B._BodyPerm.shape[0]):
             ComposeBodyPerm[ib] = B._BodyPerm[A._BodyPerm[ib]]
@@ -588,13 +663,15 @@ cdef class ActionSym():
         cdef Py_ssize_t num = B.TimeRev * A.TimeShiftNum * B.TimeShiftDen + B.TimeShiftNum * A.TimeShiftDen
         cdef Py_ssize_t den = A.TimeShiftDen * B.TimeShiftDen
 
-        return ActionSym(
+        cdef ActionSym Sym = ActionSym(
             BodyPerm = ComposeBodyPerm                      ,
-            SpaceRot = np.matmul(B._SpaceRot,A._SpaceRot)   ,
+            SpaceRot = np.matmul(B._SpaceRot, A._SpaceRot)  ,
             TimeRev = trev                                  ,
             TimeShiftNum = num                              ,
             TimeShiftDen = den                              ,
         )
+
+        return Sym
 
     @cython.final
     cpdef ActionSym Conjugate(ActionSym A, ActionSym B):
@@ -1241,8 +1318,33 @@ cdef class ActionSym():
     @cython.cdivision(True)
     @property
     def signature(ActionSym self):
-        """
-        TODO
+        """ :class:`DiscreteActionSymSignature` The signature of an ActionSym.
+
+        Example
+        -------
+
+        >>> import numpy as np
+        >>> import choreo
+        >>>
+        >>> angle = 2*np.pi * 1/5
+        >>> c = np.cos(angle)
+        >>> s = np.sin(angle)
+        >>>
+        >>> SymSig = choreo.ActionSym(
+        ...     BodyPerm = np.array([0,1,2], dtype=np.intp)             ,
+        ...     SpaceRot = np.array([[c,-s],[s,c]], dtype=np.float64)   ,
+        ...     TimeRev = 1                                             ,
+        ...     TimeShiftNum = 0                                        ,
+        ...     TimeShiftDen = 1                                        ,
+        ... ).signature
+        >>>
+        >>> print(SymSig)
+        DiscreteActionSymSignature object
+        BodyPerm: [0 1 2]
+        SpaceRotSig: 1 / 5
+        TimeRev: 1
+        TimeShift: 0 / 1
+
         """
 
         cdef double shift_1D = 2.
@@ -1319,7 +1421,7 @@ cdef class ActionSym():
 
             i-=2
 
-        return DiscreteActionSymSignature(
+        cdef DiscreteActionSymSignature SymSig = DiscreteActionSymSignature(
             self._BodyPerm.copy()   ,
             SpaceRotSig             ,
             n2DBlocks               ,
@@ -1328,6 +1430,8 @@ cdef class ActionSym():
             self.TimeShiftDen       ,
             basis_sorted            ,
         )
+
+        return SymSig
 
     @cython.final
     @cython.cdivision(True)

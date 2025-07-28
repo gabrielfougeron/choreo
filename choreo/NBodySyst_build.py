@@ -170,10 +170,10 @@ def AppendIfNot(CstrList, Constraint, test_callback):
 
         for FoundCstr in CstrList:
 
-            if test_callback(Constraint.Compose(FoundCstr)):
+            if test_callback(Constraint * FoundCstr):
                 break
 
-            if test_callback(ConstraintInv.Compose(FoundCstr)):
+            if test_callback(ConstraintInv * FoundCstr):
                 break
 
         else:
@@ -235,11 +235,11 @@ def AccumulateBodyConstraints(Sym_list, nbody, geodim):
                 
                     ParallelEdgeSym = edge_dict["Sym"]
 
-                    Constraint = EdgeSym.Inverse().Compose(ParallelEdgeSym)
+                    Constraint = EdgeSym.Inverse() * ParallelEdgeSym
                     assert Constraint.BodyPerm[edge[0]] == edge[0]
                     AppendIfNotSameRotAndTime(BodyConstraints[edge[0]], Constraint)
 
-                    Constraint = EdgeSym.Compose(ParallelEdgeSym.Inverse())
+                    Constraint = EdgeSym * ParallelEdgeSym.Inverse()
                     assert Constraint.BodyPerm[edge[1]] == edge[1]
                     AppendIfNotSameRotAndTime(BodyConstraints[edge[1]], Constraint)
 
@@ -264,7 +264,7 @@ def AccumulateBodyConstraints(Sym_list, nbody, geodim):
                 
             assert Sym.BodyPerm[ibeg] == iend
                 
-            FirstBodyConstraint = Sym.Compose(FirstBodyConstraint)
+            FirstBodyConstraint = Sym * FirstBodyConstraint
         
         assert FirstBodyConstraint.BodyPerm[FirstBody] == FirstBody
 
@@ -292,7 +292,7 @@ def AccumulateBodyConstraints(Sym_list, nbody, geodim):
                         edge = (path[ipath-1], path[ipath])
                         Sym = SimpleBodyGraph.edges[edge]["Sym"]
 
-                    FirstBodyToibSym = Sym.Compose(FirstBodyToibSym)
+                    FirstBodyToibSym = Sym * FirstBodyToibSym
 
                 assert FirstBodyToibSym.BodyPerm[FirstBody] == ib
                 
@@ -324,10 +324,10 @@ def AccumulateSegmentConstraints(SegmGraph, nbody, geodim, nsegm, bodysegm):
             iend = Cycle[(iedge+1)%Cycle_len]
 
             if (ibeg <= iend):
-                Constraint = SegmGraph.edges[(ibeg,iend)]["SymList"][0].Compose(Constraint)
+                Constraint = SegmGraph.edges[(ibeg,iend)]["SymList"][0] * Constraint
                 
             else:
-                Constraint = SegmGraph.edges[(iend,ibeg)]["SymList"][0].Inverse().Compose(Constraint)
+                Constraint = SegmGraph.edges[(iend,ibeg)]["SymList"][0].Inverse() * Constraint
 
         AppendIfNotSameRotAndTime(SegmConstraints[isegm], Constraint)
 
@@ -400,10 +400,10 @@ def AccumulateInstConstraints(Sym_list, nbody, geodim, nint, VelSym=False):
                 
                     ParallelEdgeSym = edge_dict["Sym"]
 
-                    Constraint = EdgeSym.Inverse().Compose(ParallelEdgeSym)
+                    Constraint = EdgeSym.Inverse() * ParallelEdgeSym
                     AppendIfNotSamePermAndRot(InstConstraints[edge[0]], Constraint)
 
-                    Constraint = EdgeSym.Compose(ParallelEdgeSym.Inverse())
+                    Constraint = EdgeSym * ParallelEdgeSym.Inverse()
                     AppendIfNotSamePermAndRot(InstConstraints[edge[1]], Constraint)
 
     Cycles = networkx.simple_cycles(InstGraph)
@@ -425,7 +425,7 @@ def AccumulateInstConstraints(Sym_list, nbody, geodim, nint, VelSym=False):
             else:
                 Sym = InstGraph.edges[(ibeg,iend)]["Sym"]
 
-            FirstInstConstraint = Sym.Compose(FirstInstConstraint)
+            FirstInstConstraint = Sym * FirstInstConstraint
 
         if not(FirstInstConstraint.IsIdentityPermAndRotAndTimeRev()):
             
@@ -442,7 +442,7 @@ def AccumulateInstConstraints(Sym_list, nbody, geodim, nint, VelSym=False):
                 else:
                     Sym = InstGraph.edges[(jint,iint)]["Sym"]
                     
-                SymFromFirstInst = Sym.Compose(SymFromFirstInst)
+                SymFromFirstInst = Sym * SymFromFirstInst
 
                 Constraint = FirstInstConstraint.Conjugate(SymFromFirstInst)
                 AppendIfNotSamePermAndRot(InstConstraints[iint], Constraint)
@@ -805,7 +805,7 @@ def AccumulateSegmSourceToTargetSym(
             else:
                 EdgeSym = SegmGraph.edges[edge]["SymList"][0].Inverse()
 
-            segm_gen_to_target[edge[1][0]][edge[1][1]] = EdgeSym.Compose(Sym)
+            segm_gen_to_target[edge[1][0]][edge[1][1]] = EdgeSym * Sym
             
     return segm_gen_to_target                       
 
@@ -835,11 +835,11 @@ def FindAllBinarySegments(intersegm_to_all, nbody, nsegm, nint_min, intersegm_to
 
                 if (isegm <= isegmp):
                     bisegm = (isegm, isegmp)
-                    Sym = (intersegm_to_all[ibp][iint].Inverse()).Compose(intersegm_to_all[ib][iint])
+                    Sym = (intersegm_to_all[ibp][iint].Inverse()) * intersegm_to_all[ib][iint]
 
                 else:
                     bisegm = (isegmp, isegm)
-                    Sym = (intersegm_to_all[ib][iint].Inverse()).Compose(intersegm_to_all[ibp][iint])
+                    Sym = (intersegm_to_all[ib][iint].Inverse()) * intersegm_to_all[ibp][iint]
 
                 if ((isegm == isegmp) and Sym.IsIdentityRotAndTimeRev()):
                         raise ValueError("Provided symmetries resulted in two bodies having identical trajectories.")
@@ -881,11 +881,11 @@ def FindAllBinarySegments(intersegm_to_all, nbody, nsegm, nint_min, intersegm_to
 
                 if (isegm <= isegmp):
                     bisegm = (isegm, isegmp)
-                    Sym = (intersegm_to_all[ibp][iint].Inverse()).Compose(intersegm_to_all[ib][iint])
+                    Sym = (intersegm_to_all[ibp][iint].Inverse()) * intersegm_to_all[ib][iint]
 
                 else:
                     bisegm = (isegmp, isegm)
-                    Sym = (intersegm_to_all[ib][iint].Inverse()).Compose(intersegm_to_all[ibp][iint])
+                    Sym = (intersegm_to_all[ib][iint].Inverse()) * intersegm_to_all[ibp][iint]
 
                 if ((isegm == isegmp) and Sym.IsIdentityRotAndTimeRev()):
                         raise ValueError("Provided symmetries resulted in two bodies having identical trajectories.")

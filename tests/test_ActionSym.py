@@ -1,4 +1,4 @@
-""" Tests properties of :class:`choreo.ActionSym`.
+""" Tests properties of :class:`choreo.ActionSym` and :class:`choreo.DiscreteActionSymSignature`.
 
 .. autosummary::
     :toctree: _generated/
@@ -33,7 +33,7 @@ def test_Identity(float64_tols, geodim, nbody):
     assert Id.IsIdentity(atol = float64_tols.atol)
     assert Id.IsWellFormed(atol = float64_tols.atol)
 
-    Id2 = Id.Compose(Id)
+    Id2 = Id * Id
 
     assert Id2.IsIdentity(atol = float64_tols.atol)
 
@@ -57,16 +57,16 @@ def test_Random(float64_tols, geodim, nbody):
     assert A.IsWellFormed(atol = float64_tols.atol)
     assert AInv.IsWellFormed(atol = float64_tols.atol)
 
-    assert Id.IsSame(A.Compose(AInv), atol = float64_tols.atol)
-    assert Id.IsSame(AInv.Compose(A), atol = float64_tols.atol)
+    assert Id.IsSame(A * AInv, atol = float64_tols.atol)
+    assert Id.IsSame(AInv * A, atol = float64_tols.atol)
 
     B = choreo.ActionSym.Random(nbody, geodim)
     BInv = B.Inverse()
 
     assert not(A.IsSame(B, atol = float64_tols.atol))
 
-    AB = A.Compose(B)
-    BA = B.Compose(A)
+    AB = A * B
+    BA = B * A
     
     assert AB.IsWellFormed(atol = float64_tols.atol)
     assert BA.IsWellFormed(atol = float64_tols.atol)            
@@ -85,13 +85,13 @@ def test_Random(float64_tols, geodim, nbody):
     assert ABInv.IsWellFormed(atol = float64_tols.atol)
     assert BAInv.IsWellFormed(atol = float64_tols.atol)            
     
-    assert ABInv.IsSame(BInv.Compose(AInv), atol = float64_tols.atol)
-    assert BAInv.IsSame(AInv.Compose(BInv), atol = float64_tols.atol)
+    assert ABInv.IsSame(BInv * AInv, atol = float64_tols.atol)
+    assert BAInv.IsSame(AInv * BInv, atol = float64_tols.atol)
 
     C = choreo.ActionSym.Random(nbody, geodim)
 
-    A_BC = A.Compose(B.Compose(C))
-    AB_C = A.Compose(B).Compose(C)
+    A_BC = A * (B * C)
+    AB_C = (A * B) *C
     
     assert A_BC.IsWellFormed(atol = float64_tols.atol)
     assert AB_C.IsWellFormed(atol = float64_tols.atol)           
@@ -210,8 +210,11 @@ def test_DiscreteActionSymSignature(Sym_list, float64_tols):
     for Sym in Sym_list:
 
         SymSig = Sym.signature
+        
+        assert SymSig.IsWellFormed
+        
         Symp = SymSig.ActionSym
-
+        
         assert Sym.IsSame(Symp, atol=float64_tols.atol)
         
         geodim = Sym.geodim
@@ -221,6 +224,7 @@ def test_DiscreteActionSymSignature(Sym_list, float64_tols):
         Symp = SymSig.ActionSym
         SymSigp = Symp.signature
         
+        assert SymSigp.IsWellFormed
         assert SymSig == SymSigp
 
 @ParametrizeDocstrings

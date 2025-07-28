@@ -24,6 +24,7 @@ Defining symmetries
     :nosignatures:
 
     ActionSym    
+    DiscreteActionSymSignature    
     
 ==========================
 Numerical tools on segment
@@ -65,7 +66,7 @@ try:
 except:
     NUMBA_AVAILABLE = False
 
-from .cython            import NBodySyst, ActionSym
+from .cython            import NBodySyst, ActionSym, DiscreteActionSymSignature
 from .                  import segm
 from .                  import scipy_plus
 from .                  import run
