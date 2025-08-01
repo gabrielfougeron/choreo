@@ -107,6 +107,15 @@ def Find_Choreo(
     NBS.fftw_wisdom_only = fftw_wisdom_only
     NBS.fftw_nthreads = fftw_nthreads
     NBS.fft_backend = fft_backend
+    
+    print(f'{nint_fac_init = }')
+
+    if nint_fac_init is None:
+        if NBS_ini is None:
+            raise ValueError("Could not determine nint_fac_init")
+        else:
+            nint_init = NBS_ini.nint
+            nint_fac_init = nint_init // (2 * NBS.nint_min)
 
     NBS.nint_fac = nint_fac_init
 
@@ -1125,7 +1134,7 @@ def Write_wisdom_file(Wisdom_file):
             jsonString = json.dumps(Wis_dict, indent=4, sort_keys=False)
             jsonFile.write(jsonString)
 
-def FindTimeRevSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-9, refl_dim = [0], return_best = False):
+def FindTimeRevSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-9, refl_dim = [0], return_best = False, random_init = True):
     
     if isinstance(refl_dim, int):
         refl_dim = [refl_dim]
@@ -1175,11 +1184,14 @@ def FindTimeRevSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-9, refl_dim = [0]
     
     best_sol = choreo.scipy_plus.nonlin.current_best((np.zeros(n_SymParams,dtype=np.float64),np.array(range(NBS.nbody))), np.inf)
     
-    for itry in range(ntries):
-
-        for BodyPerm in ActionSym.InvolutivePermutations(NBS.nbody):
-            
-            x0 = np.random.random(n_SymParams)
+    for BodyPerm in ActionSym.InvolutivePermutations(NBS.nbody):
+        
+        for itry in range(ntries):
+        
+            if random_init:
+                x0 = np.random.random(n_SymParams)
+            else:
+                x0 = np.zeros(n_SymParams,dtype=np.float64)
     
             # method = "BFGS"
             method = "L-BFGS-B"
@@ -1195,54 +1207,56 @@ def FindTimeRevSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-9, refl_dim = [0]
         x, f, f_norm = best_sol.get_best()    
         return Compute_Sym(x[0], x[1])
  
-def FindTimeDirectSymmetry(NBS, semgpos, ntries = 1, refl_dim = [0], hit_tol = 1e-9, return_best = False, random_init = True, maxden = 10):
-    # NOT DONE
+def FindTimeDirectSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-9, return_best = False, random_init = True, max_order = 5, skip_SymSig_if = lambda SymSig:False):
 
     def Compute_Sym(SymParams, *args):
         
-        BodyPerm = args[0]
-        
-        rot = ActionSym.SurjectiveDirectSpaceRot(SymParams)
-        
-        for idim in refl_dim:
-            if idim >= 0:
-                rot[idim,idim] = -1
+        SymSig = args[0]
 
-        Sym = ActionSym(
-            BodyPerm    ,
-            rot         ,
-            -1          ,
-            0           ,
-            1           ,
-        )
+        SymSig.basis = ActionSym.SurjectiveDirectSpaceRot(SymParams)
+        
+        Sym = SymSig.ActionSym
 
         return Sym
     
+    # ncalls = [0]
+    
     def EvalSym(SymParams, *args):
         
-        Sym, segmpos_dt = Compute_Sym(SymParams, *args)
-
-        return NBS.ComputeSymDefault(segmpos_dt, Sym, lnorm = 22, full=False)
+        # ncalls[0] += 1
+        # print(f'{ncalls[0] = }')
+        # 
+        # print(semgpos.shape)
+        
+        Sym = Compute_Sym(SymParams, *args)
+        return NBS.ComputeSymDefault(semgpos, Sym, lnorm = 22, full=False)
     
-    n_SymParams = 1 + (NBS.geodim * (NBS.geodim-1) // 2)
+    n_SymParams = (NBS.geodim * (NBS.geodim-1) // 2)
     
     best_sol = choreo.scipy_plus.nonlin.current_best((np.zeros(n_SymParams,dtype=np.float64),np.array(range(NBS.nbody))), np.inf)
     
-    for itry in range(ntries):
-        # 
-        # for timeshift_num, timeshift_den in ActionSym.TimeShifts(maxden):
-        # 
-        # 
-        # 
-        # 
-        # 
-        # 
+    CayleyGraph = choreo.ActionSym.BuildCayleyGraph(NBS.nbody, NBS.geodim, GeneratorList = NBS.Sym_list)
+    all_signatures = []
+    for nodename, node in CayleyGraph.nodes(data=True):
+        Sym = node.get('Sym')
+        SymSig = Sym.signature
+        all_signatures.append(SymSig)
+    
+    # nsym = 0
+    
+    for SymSig in choreo.DiscreteActionSymSignature.DirectTimeSignatures(nbody=NBS.nbody, geodim=NBS.geodim, max_order=max_order):
         
-        
-        
+        # nsym += 1
+        # print(f'{nsym = }')
 
-        for BodyPerm in ActionSym.InvolutivePermutations(NBS.nbody):
-            
+        if skip_SymSig_if(SymSig):
+            continue
+        
+        if SymSig in all_signatures:
+            continue
+    
+        for itry in range(ntries):
+
             if random_init:
                 x0 = np.random.random(n_SymParams)
             else:
@@ -1251,12 +1265,12 @@ def FindTimeDirectSymmetry(NBS, semgpos, ntries = 1, refl_dim = [0], hit_tol = 1
             # method = "BFGS"
             method = "L-BFGS-B"
             # method = "SLSQP"
-            opt_res = scipy.optimize.minimize(EvalSym, x0, args=(BodyPerm,), method=method, tol=0.1*hit_tol, callback=None, options={"maxiter":100})
+            opt_res = scipy.optimize.minimize(EvalSym, x0, args=(SymSig,), method=method, tol=0.1*hit_tol, callback=None, options={"maxiter":10})
 
-            best_sol.update((opt_res.x, BodyPerm), opt_res.fun)
+            best_sol.update((opt_res.x, SymSig), opt_res.fun)
 
             if opt_res.fun < hit_tol:
-                return Compute_Sym(opt_res.x, BodyPerm)
+                return Compute_Sym(opt_res.x, SymSig)
 
     if return_best:            
         x, f, f_norm = best_sol.get_best()    

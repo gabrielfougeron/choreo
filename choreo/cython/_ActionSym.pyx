@@ -1488,8 +1488,10 @@ cdef class ActionSym():
 
         """ 
 
+        assert in_segm.shape[0] == out.shape[0]
+
         np.matmul(in_segm, self._SpaceRot.T, out=out)
-        if self.TimeRev == -1:
+        if self.TimeRev < 0:
             out[:,:] = out[::-1,:]          
             
     @cython.final

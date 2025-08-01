@@ -115,7 +115,7 @@ Tests:
     assert np.allclose(segmpos_noopt, segmpos_cy, rtol = float64_tols.rtol, atol = float64_tols.atol)   
     
     for Sym in NBS.Sym_list:
-        assert NBS.ComputeSymDefault(segmpos_cy, Sym) < float64_tols.atol
+        assert NBS.ComputeSymDefault(segmpos_cy, Sym, full = True) < float64_tols.atol
         
 @ParametrizeDocstrings
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])
@@ -149,7 +149,7 @@ Tests:
     assert np.allclose(segmvel_noopt, segmvel_cy, rtol = float64_tols.rtol, atol = float64_tols.atol)  
     
     for Sym in NBS.Sym_list:
-        assert NBS.ComputeSymDefault(segmvel_cy, Sym.TimeDerivative(), pos = False) < float64_tols.atol
+        assert NBS.ComputeSymDefault(segmvel_cy, Sym.TimeDerivative(), pos = False, full = True) < float64_tols.atol
     
 @ParametrizeDocstrings
 @pytest.mark.parametrize("NBS", [pytest.param(NBS, id=name) for name, NBS in NBS_dict.items()])

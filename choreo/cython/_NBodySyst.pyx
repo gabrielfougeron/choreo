@@ -1468,9 +1468,9 @@ cdef class NBodySyst():
                         EdgeSym = self.SegmGraph.edges[edge]["SymList"][0]    
 
                         if edge[0] <= edge[1]:
-                            NewSym = EdgeSym.Compose(Sym)
+                            NewSym = EdgeSym * Sym
                         else:
-                            NewSym = (EdgeSym.Inverse()).Compose(Sym)
+                            NewSym = EdgeSym.Inverse() * Sym
 
                         Sym_dict[edge[1]] = NewSym
 
@@ -4526,7 +4526,7 @@ cdef class NBodySyst():
                     else:
                         Sym = self.BodyGraph.edges[(path[ipath-1], path[ipath])]["SymList"][0]
 
-                    TotSym = Sym.Compose(TotSym)
+                    TotSym = Sym * TotSym
             
                 for iint_gen in range(self._nint):
                     
@@ -4760,7 +4760,7 @@ cdef class NBodySyst():
 
     @cython.cdivision(True)
     @cython.final
-    def ComputeSymDefault(self, double[:,:,::1] segmpos, ActionSym Sym, Py_ssize_t lnorm = 1, full = True, pos = True):
+    def ComputeSymDefault_old(self, double[:,:,::1] segmpos, ActionSym Sym, Py_ssize_t lnorm = 1, full = False, pos = True):
 
         if lnorm not in [1,2,22]:
             raise ValueError(f'ComputeSymDefault only computes L1, L2 or L2 squared norms. Received {lnorm = }.')
@@ -4790,9 +4790,9 @@ cdef class NBodySyst():
                 # Computing trans_pos
                 isegm = self._bodysegm[ib, iint]
                 if pos:
-                    CSym = Sym.Compose(self.intersegm_to_all[ib][iint])
+                    CSym = Sym * self.intersegm_to_all[ib][iint]
                 else:
-                    CSym = Sym.Compose(self.intersegm_to_all[ib][iint].TimeDerivative())
+                    CSym = Sym * self.intersegm_to_all[ib][iint].TimeDerivative()
 
                 if CSym.TimeRev > 0:
                     segmbeg = 0
@@ -4808,6 +4808,7 @@ cdef class NBodySyst():
 
                 ibp = Sym._BodyPerm[ib]
                 tnum_target, tden_target = Sym.ApplyTSegm(iint, self.nint_min)
+
                 assert self.nint_min % tden_target == 0
                 iintp = (tnum_target * (self.nint_min // tden_target) + self.nint_min) % self.nint_min
 
@@ -4826,6 +4827,120 @@ cdef class NBodySyst():
                     assert self.GreaterNStore
 
                 CSym.TransformSegment(segmpos[isegmp,segmbeg:segmend,:], trans_posp)
+
+                scipy.linalg.cython_blas.daxpy(&size,&minusone_double,&trans_posp[0,0],&int_one,&trans_pos[0,0],&int_one)
+                if lnorm == 1:
+                    res += scipy.linalg.cython_blas.dasum(&size,&trans_pos[0,0],&int_one)
+                else:
+                    res += scipy.linalg.cython_blas.ddot(&size, &trans_pos[0,0], &int_one, &trans_pos[0,0], &int_one)
+
+        if lnorm == 1:
+            return res / n_pts
+        elif lnorm == 2:
+            return csqrt(res / n_pts)
+        else:
+            return res / n_pts
+
+    @cython.cdivision(True)
+    @cython.final
+    def ComputeSymDefault(self, double[:,:,::1] segmpos, ActionSym Sym, Py_ssize_t lnorm = 1, pos = True, full = False):
+
+        if lnorm not in [1,2,22]:
+            raise ValueError(f'ComputeSymDefault only computes L1, L2 or L2 squared norms. Received {lnorm = }.')
+
+        cdef Py_ssize_t n_pts
+        cdef Py_ssize_t tbeg, tend
+        cdef Py_ssize_t CTtbeg, CTtend
+        cdef Py_ssize_t iint_beg, iint_end
+        cdef Py_ssize_t ib , iint
+        cdef Py_ssize_t ibp, iintp
+        cdef Py_ssize_t segmbeg, segmend
+        cdef Py_ssize_t nint_segm_beg, nint_segm_end
+        cdef Py_ssize_t isegm
+        cdef ActionSym CSym  
+        cdef int size = self.geodim * self.segm_store
+        cdef np.ndarray[double, ndim=2, mode='c'] trans_pos  = np.empty((self.segm_store, self.geodim), dtype=np.float64)
+        cdef np.ndarray[double, ndim=2, mode='c'] trans_posp = np.empty((self.segm_store, self.geodim), dtype=np.float64)
+
+        cdef double res = 0
+
+        if full:
+            all_iints = range(self.nint_min)
+            n_pts = self.nbody * self.segm_store * self.nint_min
+        else:
+            all_iints = [0]
+            n_pts = self.nbody * self.segm_store
+
+        for ib in range(self.nbody):
+
+            for iint in all_iints:
+
+                # Computing trans_pos
+                isegm = self._bodysegm[ib, iint]
+                if pos:
+                    CSym = Sym * self.intersegm_to_all[ib][iint]
+                else:
+                    CSym = Sym * self.intersegm_to_all[ib][iint].TimeDerivative()
+
+                CSym.TransformSegment(segmpos[isegm,:,:], trans_pos)
+
+                # Where is trans_pos ?
+
+                tbeg = 0              
+                tend = self.segm_store
+
+                if CSym.TimeRev > 0:
+
+                    tnum, tden = CSym.ApplyT(tbeg, self._nint)
+                    assert self._nint % tden == 0
+                    CTtbeg = tnum * (self._nint // tden)
+
+                    tnum, tden = CSym.ApplyT(tend-1, self._nint)
+                    assert self._nint % tden == 0
+                    CTtend = tnum * (self._nint // tden) + 1 
+
+                else:
+
+                    tend = (tend + self._nint - 1) % self._nint
+                    tnum, tden = CSym.ApplyT(tend, self._nint)
+                    assert self._nint % tden == 0
+                    CTtbeg = tnum * (self._nint // tden)
+
+                    tnum, tden = CSym.ApplyT(tbeg, self._nint)
+                    assert self._nint % tden == 0
+                    CTtend = tnum * (self._nint // tden) + 1
+
+                # Computing trans_posp
+
+                ibp = Sym._BodyPerm[ib]
+                iint_beg, segmbeg = divmod(CTtbeg, self.segm_size)
+
+                isegmp = self._bodysegm[ibp, iint_beg]
+
+                if pos:
+                    CSym = self.intersegm_to_all[ibp][iint_beg]
+                else:
+                    CSym = self.intersegm_to_all[ibp][iint_beg].TimeDerivative()
+
+                nint_segm_beg = self.segm_store - segmbeg
+
+                CSym.TransformSegment(segmpos[isegmp,segmbeg:,:], trans_posp[:nint_segm_beg,:])
+
+                if nint_segm_beg < self.segm_store:
+
+                    iint_end, segmend = divmod(CTtend, self.segm_size)
+
+                    isegmp = self._bodysegm[ibp, iint_end]
+                    if pos:
+                        CSym = self.intersegm_to_all[ibp][iint_end]
+                    else:
+                        CSym = self.intersegm_to_all[ibp][iint_end].TimeDerivative()
+
+                    nint_segm_end = self.segm_store - segmend
+                    
+                    assert nint_segm_end <= nint_segm_beg
+
+                    CSym.TransformSegment(segmpos[isegmp,:segmend,:], trans_posp[nint_segm_end:,:])
 
                 scipy.linalg.cython_blas.daxpy(&size,&minusone_double,&trans_posp[0,0],&int_one,&trans_pos[0,0],&int_one)
                 if lnorm == 1:

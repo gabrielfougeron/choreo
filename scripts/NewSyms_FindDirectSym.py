@@ -3,6 +3,7 @@ import numpy as np
 import threadpoolctl
 import choreo 
 import json
+import math
 
 __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
 
@@ -14,6 +15,14 @@ def main():
     # Remove_Different = False
     Remove_Different = True
     
+    max_order = 11
+    
+    # skip_SymSig_if = lambda SymSig : False
+    
+    def skip_SymSig_if(SymSig):
+        return SymSig.TimeShiftDen != 11
+    
+    
     Wisdom_file = os.path.join(__PROJECT_ROOT__, "PYFFTW_wisdom.json")
     choreo.find.Load_wisdom_file(Wisdom_file)
     
@@ -24,7 +33,8 @@ def main():
     # input_folder = os.path.join(Workspace_folder, "GUI solutions")    
     
     
-    output_folder = os.path.join(Workspace_folder, "ReflexionSymmetry")    
+    # output_folder = os.path.join(Workspace_folder, "ReflexionSymmetry")    
+    output_folder = os.path.join(Workspace_folder, "TimeDirectSymmetry")    
     params_filename = os.path.join(Workspace_folder, "choreo_config_reconverge.json")
     with open(params_filename) as jsonFile:
         params_dict = json.load(jsonFile)
@@ -49,7 +59,6 @@ def main():
                     
         print()
         print(file_basename)
-        # print()
 
         NBS, segmpos = choreo.NBodySyst.FromSolutionFile(full_in_file_basename)
         
@@ -59,22 +68,24 @@ def main():
                 extra_args_dict = json.load(jsonFile)
 
             params_buf = NBS.segmpos_to_params(segmpos)
-            NBS.ForceGreaterNStore = True
             
+            # nint_new = math.lcm(NBS.nint, *list(range(1,max_order+1)))
+            nint_new = math.lcm(NBS.nint, max_order)
+            nint_fac_new = nint_new // (2 * NBS.nint_min)
+
+            params_buf = NBS.params_resize(params_buf, nint_fac_new)
+            NBS.nint_fac = nint_fac_new
+
+            NBS.ForceGreaterNStore = True            
             segmpos = NBS.params_to_segmpos(params_buf)
             
-            if NBS.TimeRev < 0:
-                continue
+            Sym = choreo.find.FindTimeDirectSymmetry(NBS, segmpos, ntries = 10, max_order = max_order, skip_SymSig_if = skip_SymSig_if)
             
-            res = choreo.find.FindTimeRevSymmetry(NBS, segmpos, refl_dim=[1], ntries = 10)
-            
-            if res is None:
-                print("Could not find TimeRev symmetry")
+            if Sym is None:
+                print("Could not find TimeDirect symmetry")
                 No_SymFound_list.append(file_basename)
                 continue
             
-            Sym, segmpos_dt = res
-
             Sym_list = [choreo.ActionSym.FromDict(Symp) for Symp in extra_args_dict["Sym_list"]]
             Sym_list.append(Sym)
 
@@ -83,7 +94,7 @@ def main():
                 "ReconvergeSol" : True          ,
                 "nint_fac_init" : None          ,
                 "NBS_ini"       : NBS           ,
-                "segmpos_ini"   : segmpos_dt    ,
+                "segmpos_ini"   : segmpos       ,
                 "Sym_list"      : Sym_list      ,
                 "mass"          : np.array(extra_args_dict["bodymass"]),
                 "charge"        : np.array(extra_args_dict["bodycharge"]),
