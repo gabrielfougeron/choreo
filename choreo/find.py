@@ -12,6 +12,7 @@ import json
 import time
 import inspect
 import threadpoolctl
+import math
 
 import choreo.metadata
 import choreo.scipy_plus
@@ -1205,7 +1206,13 @@ def FindTimeRevSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-9, refl_dim = [0]
         x, f, f_norm = best_sol.get_best()    
         return Compute_Sym(x[0], x[1])
  
-def FindTimeDirectSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-9, return_best = False, random_init = True, max_order = 5, skip_SymSig_if = lambda SymSig:False):
+def FindTimeDirectSymmetry(NBS, semgpos, params_buf_init = None, ntries = 1, hit_tol = 1e-9, random_init = True, max_order = 5, skip_SymSig_if = lambda SymSig:False):
+    # If a symmetry is found, NBS on exit is changed. This is on purpose to chain with a call to Find_Choreo with ReconvergeSol = True
+    
+    if params_buf_init is None:
+        params_buf_init = NBS.segmpos_to_params(semgpos)
+        
+    nint_init = NBS.nint
 
     def Compute_Sym(SymParams, *args):
         
@@ -1216,10 +1223,6 @@ def FindTimeDirectSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-9, return_best
         Sym = SymSig.ActionSym
 
         return Sym
-    
-    def EvalSym(SymParams, *args):
-        Sym = Compute_Sym(SymParams, *args)
-        return NBS.ComputeSymDefault(semgpos, Sym, lnorm = 22, full=False)
     
     n_SymParams = (NBS.geodim * (NBS.geodim-1) // 2)
     
@@ -1239,9 +1242,27 @@ def FindTimeDirectSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-9, return_best
         
         if SymSig in all_signatures:
             continue
-    
-        print()
-        print(SymSig)
+
+        nint_new = math.lcm(nint_init, SymSig.TimeShiftDen)
+        
+        if nint_new > nint_init:
+            
+            nint_fac_new = nint_new // (2 * NBS.nint_min)
+
+            NBS.nint = nint_init
+            params_buf = NBS.params_resize(params_buf_init, nint_fac_new)
+            NBS.nint = nint_new
+          
+            segmpos_new = NBS.params_to_segmpos(params_buf)
+            
+        else:
+            
+            NBS.nint = nint_init
+            segmpos_new = semgpos
+            
+        def EvalSym(SymParams, *args):
+            Sym = Compute_Sym(SymParams, *args)
+            return NBS.ComputeSymDefault(segmpos_new, Sym, lnorm = 22, full=False)
     
         for itry in range(ntries):
 
@@ -1255,14 +1276,12 @@ def FindTimeDirectSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-9, return_best
             # method = "SLSQP"
             opt_res = scipy.optimize.minimize(EvalSym, x0, args=(SymSig,), method=method, tol=0.1*hit_tol, callback=None, options={"maxiter":100})
             
-            print(opt_res.fun)
+            # print(opt_res.fun)
 
             best_sol.update((opt_res.x, SymSig), opt_res.fun)
 
             if opt_res.fun < hit_tol:
-                return Compute_Sym(opt_res.x, SymSig)
+                return Compute_Sym(opt_res.x, SymSig), segmpos_new
 
-    if return_best:            
-        x, f, f_norm = best_sol.get_best()    
-        return Compute_Sym(x[0], x[1])
+    NBS.nint = nint_init
  

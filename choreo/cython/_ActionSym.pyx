@@ -1493,7 +1493,6 @@ cdef class ActionSym():
         cdef int n = in_segm.shape[0]
         cdef int k = self._SpaceRot.shape[0]
         cdef double tmp
-        cdef Py_ssize_t nr = n-1
 
         assert in_segm.shape[0] == out.shape[0]
 
@@ -1501,9 +1500,11 @@ cdef class ActionSym():
 
         if self.TimeRev < 0:
 
+            ir = n
+
             for i in range(n//2):
 
-                ir = nr-i
+                ir -= 1
 
                 for j in range(k):
 

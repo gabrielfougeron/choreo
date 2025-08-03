@@ -15,14 +15,14 @@ def main():
     # Remove_Different = False
     Remove_Different = True
     
-    max_order = 6
+    max_order = 11
     
-    # skip_SymSig_if = lambda SymSig : False
+    skip_SymSig_if = lambda SymSig : False
     
-    def skip_SymSig_if(SymSig):
-        
-        test_OK = (SymSig.SpaceRotSig[1] % 3) == 0 and (SymSig.TimeShiftDen % 3) == 0 
-        return not test_OK
+    # def skip_SymSig_if(SymSig):
+    #     
+    #     test_OK = (SymSig.SpaceRotSig[1] % 3) == 0 and (SymSig.TimeShiftDen % 3) == 0 
+    #     return not test_OK
 
     Wisdom_file = os.path.join(__PROJECT_ROOT__, "PYFFTW_wisdom.json")
     choreo.find.Load_wisdom_file(Wisdom_file)
@@ -69,26 +69,17 @@ def main():
 
             with open(os.path.join(input_folder, thefile)) as jsonFile:
                 extra_args_dict = json.load(jsonFile)
-
-            params_buf = NBS.segmpos_to_params(segmpos)
             
-            # nint_new = math.lcm(NBS.nint, *list(range(1,max_order+1)))
-            nint_new = math.lcm(NBS.nint, max_order)
-            nint_fac_new = nint_new // (2 * NBS.nint_min)
-
-            params_buf = NBS.params_resize(params_buf, nint_fac_new)
-            NBS.nint_fac = nint_fac_new
-
-            NBS.ForceGreaterNStore = True            
-            segmpos = NBS.params_to_segmpos(params_buf)
+            res = choreo.find.FindTimeDirectSymmetry(NBS, segmpos, ntries = 1, max_order = max_order, skip_SymSig_if = skip_SymSig_if, hit_tol = 1e-8)
             
-            Sym = choreo.find.FindTimeDirectSymmetry(NBS, segmpos, ntries = 1, max_order = max_order, skip_SymSig_if = skip_SymSig_if, hit_tol = 1e-3)
-            
-            if Sym is None:
+            if res is None:
                 print("Could not find TimeDirect symmetry")
                 No_SymFound_list.append(file_basename)
                 continue
             
+            else:
+                Sym, segmpos = res
+                
             Sym_list = [choreo.ActionSym.FromDict(Symp) for Symp in extra_args_dict["Sym_list"]]
             Sym_list.append(Sym)
 

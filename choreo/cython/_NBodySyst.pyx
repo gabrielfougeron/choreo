@@ -229,6 +229,8 @@ cdef class NBodySyst():
         
         if NewGreaterNStore != self.GreaterNStore:
             self.GreaterNStore = NewGreaterNStore
+            # Force reallocation of tables
+            self._nint_fac = 0
             self.nint = self._nint
 
     cdef int _fft_backend
@@ -633,6 +635,9 @@ cdef class NBodySyst():
 
         if (nint_in % (2 * self.nint_min)) != 0:
             raise ValueError(f"Provided nint {nint_in} should be divisible by {2 * self.nint_min}")
+
+        if (self._nint == nint_in) and (self._nint_fac > 0):
+            return
 
         self._nint = nint_in
         self._nint_fac = nint_in // (2 * self.nint_min)
@@ -4810,7 +4815,6 @@ cdef class NBodySyst():
                 CSym.TransformSegment(segmpos[isegm,:,:], trans_pos)
 
                 # Where is trans_pos ?
-
                 tbeg = 0              
                 tend = self.segm_store
 
