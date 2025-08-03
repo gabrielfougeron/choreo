@@ -1474,25 +1474,42 @@ cdef class ActionSym():
         """ 
         np.matmul(in_pos, self._SpaceRot.T, out=out)
             
-    # THIS IS NOT A PERFORMANCE-ORIENTED METHOD
+    @cython.cdivision(True)
     @cython.final
-    def TransformSegment(ActionSym self, in_segm, out):
+    cpdef void TransformSegment(ActionSym self, double[:,::1] in_segm, double[:,::1] out):
         """Computes a transformed segment of positions by the time and space isometry.
 
         Parameters
         ----------
-        in_pos : :class:`numpy:numpy.ndarray`:class:`(shape = (nsegm, geodim), dtype = np.float64)`
+        in_pos : :class:`numpy:numpy.ndarray`:class:`(shape = (segm_store, geodim), dtype = np.float64)`
             Input segment of positions.
-        out : :class:`numpy:numpy.ndarray`:class:`(shape = (nsegm, geodim), dtype = np.float64)`
+        out : :class:`numpy:numpy.ndarray`:class:`(shape = (segm_store, geodim), dtype = np.float64)`
             Output transformed segment of positions.
 
         """ 
 
+        cdef Py_ssize_t i, ir, j
+        cdef int m = self._SpaceRot.shape[0]
+        cdef int n = in_segm.shape[0]
+        cdef int k = self._SpaceRot.shape[0]
+        cdef double tmp
+        cdef Py_ssize_t nr = n-1
+
         assert in_segm.shape[0] == out.shape[0]
 
-        np.matmul(in_segm, self._SpaceRot.T, out=out)
+        scipy.linalg.cython_blas.dgemm(transt,transn,&m,&n,&k,&one_double,&self._SpaceRot[0,0],&m,&in_segm[0,0],&k,&zero_double,&out[0,0],&m)
+
         if self.TimeRev < 0:
-            out[:,:] = out[::-1,:]          
+
+            for i in range(n//2):
+
+                ir = nr-i
+
+                for j in range(k):
+
+                    tmp = out[i,j]
+                    out[i,j] = out[ir,j] 
+                    out[ir,j] = tmp    
             
     @cython.final
     def to_dict(ActionSym self):

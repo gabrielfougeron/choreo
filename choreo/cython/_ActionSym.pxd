@@ -96,4 +96,4 @@ cdef class ActionSym():
 
     cpdef (Py_ssize_t, Py_ssize_t) ApplyTSegm(ActionSym self, Py_ssize_t tnum, Py_ssize_t tden)
 
-
+    cpdef void TransformSegment(ActionSym self, double[:,::1] in_segm, double[:,::1] out)

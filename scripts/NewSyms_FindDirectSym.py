@@ -15,14 +15,15 @@ def main():
     # Remove_Different = False
     Remove_Different = True
     
-    max_order = 11
+    max_order = 6
     
     # skip_SymSig_if = lambda SymSig : False
     
     def skip_SymSig_if(SymSig):
-        return SymSig.TimeShiftDen != 11
-    
-    
+        
+        test_OK = (SymSig.SpaceRotSig[1] % 3) == 0 and (SymSig.TimeShiftDen % 3) == 0 
+        return not test_OK
+
     Wisdom_file = os.path.join(__PROJECT_ROOT__, "PYFFTW_wisdom.json")
     choreo.find.Load_wisdom_file(Wisdom_file)
     
@@ -30,6 +31,8 @@ def main():
     
     # input_folder = os.path.join(Workspace_folder, "test")    
     input_folder = os.path.join(Workspace_folder, "CLI solutions")    
+    # input_folder = os.path.join(Workspace_folder, "ReflexionSymmetry")    
+    
     # input_folder = os.path.join(Workspace_folder, "GUI solutions")    
     
     
@@ -79,7 +82,7 @@ def main():
             NBS.ForceGreaterNStore = True            
             segmpos = NBS.params_to_segmpos(params_buf)
             
-            Sym = choreo.find.FindTimeDirectSymmetry(NBS, segmpos, ntries = 10, max_order = max_order, skip_SymSig_if = skip_SymSig_if)
+            Sym = choreo.find.FindTimeDirectSymmetry(NBS, segmpos, ntries = 1, max_order = max_order, skip_SymSig_if = skip_SymSig_if, hit_tol = 1e-3)
             
             if Sym is None:
                 print("Could not find TimeDirect symmetry")

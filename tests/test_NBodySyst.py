@@ -44,6 +44,7 @@
     test_initposmom
     test_params_to_periodicity_default_grad_vs_FD
     test_params_to_periodicity_default_gradmat_vs_matmul
+    test_ComputeSymDefault
 
 """
 
@@ -1368,11 +1369,9 @@ def test_Monodromy(float64_tols, NBS_in, params_buf_in):
         
     else:
                 
-        NBS = NBS_in.copy_nosym()
-
         segmpos = NBS_in.params_to_segmpos(params_buf_in)
-        all_bodypos = NBS_in.segmpos_to_allbody_noopt(segmpos, pos = True )
-        params_buf = NBS.segmpos_to_params(all_bodypos)
+        NBS, segmpos_nosym = NBS_in.copy_nosym(segmpos)
+        params_buf = NBS.segmpos_to_params(segmpos_nosym)
 
     NBS.ForceGreaterNStore = True
 
@@ -1445,16 +1444,13 @@ def test_remove_all_syms_nrg(float64_tols, NBS):
     params_buf = np.random.random((NBS.nparams))
     segmpos = NBS.params_to_segmpos(params_buf)
 
-    NBS_nosym = NBS.copy_nosym()
+    NBS_nosym, segmpos_nosym = NBS.copy_nosym(segmpos)
     
     for ib in range(NBS_nosym.nbody):
         isegm = NBS_nosym.bodysegm[ib, 0]
         assert isegm == ib
     
-    all_bodypos = NBS.segmpos_to_allbody_noopt(segmpos)
-    NBS_nosym.nint = NBS.nint
-
-    params_buf_nosym = NBS_nosym.segmpos_to_params(all_bodypos)
+    params_buf_nosym = NBS_nosym.segmpos_to_params(segmpos_nosym)
     
     kin_nrg = NBS.params_to_kin_nrg(params_buf)
     pot_nrg = NBS.params_to_pot_nrg(params_buf)
@@ -1465,6 +1461,7 @@ def test_remove_all_syms_nrg(float64_tols, NBS):
     assert 2 * abs(kin_nrg - kin_nrg_nosym) / (abs(kin_nrg) + abs(kin_nrg_nosym)) < float64_tols.rtol
     assert 2 * abs(pot_nrg - pot_nrg_nosym) / (abs(pot_nrg) + abs(pot_nrg_nosym)) < float64_tols.rtol
 
+@pytest.mark.slow(required_time = 10)
 @ParametrizeDocstrings
 @pytest.mark.parametrize(("NBS", "params_buf"), [pytest.param(NBS, params_buf, id=name) for name, (NBS, params_buf) in Sols_dict.items()])
 @pytest.mark.parametrize("NoSymIfPossible", [True, False])
@@ -1809,3 +1806,20 @@ def test_params_to_periodicity_default_gradmat_vs_matmul(float64_tols, NBS):
     
     NBS.nint_fac = nint_fac_ini
     NBS.ODEperdef_eqproj_pos_mul = 1.
+    
+@ParametrizeDocstrings
+@pytest.mark.parametrize(("NBS", "params_buf"), [pytest.param(NBS, params_buf, id=name) for name, (NBS, params_buf) in Sols_dict.items()])
+def test_ComputeSymDefault(float64_tols, NBS, params_buf):
+    """ Tests whether action gradient and hessian computation can be replicated without symmetries
+    """
+    
+    segmpos = NBS.params_to_segmpos(params_buf)
+
+    NBS_nosym, segmpos_nosym = NBS.copy_nosym(segmpos)
+    
+    for ib in range(NBS_nosym.nbody):
+        isegm = NBS_nosym.bodysegm[ib, 0]
+        assert isegm == ib
+
+    for Sym in NBS.Sym_list:
+        assert NBS_nosym.ComputeSymDefault(segmpos_nosym, Sym, full = True) < float64_tols.atol

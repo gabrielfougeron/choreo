@@ -107,8 +107,6 @@ def Find_Choreo(
     NBS.fftw_wisdom_only = fftw_wisdom_only
     NBS.fftw_nthreads = fftw_nthreads
     NBS.fft_backend = fft_backend
-    
-    print(f'{nint_fac_init = }')
 
     if nint_fac_init is None:
         if NBS_ini is None:
@@ -1219,15 +1217,7 @@ def FindTimeDirectSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-9, return_best
 
         return Sym
     
-    # ncalls = [0]
-    
     def EvalSym(SymParams, *args):
-        
-        # ncalls[0] += 1
-        # print(f'{ncalls[0] = }')
-        # 
-        # print(semgpos.shape)
-        
         Sym = Compute_Sym(SymParams, *args)
         return NBS.ComputeSymDefault(semgpos, Sym, lnorm = 22, full=False)
     
@@ -1241,19 +1231,17 @@ def FindTimeDirectSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-9, return_best
         Sym = node.get('Sym')
         SymSig = Sym.signature
         all_signatures.append(SymSig)
-    
-    # nsym = 0
-    
-    for SymSig in choreo.DiscreteActionSymSignature.DirectTimeSignatures(nbody=NBS.nbody, geodim=NBS.geodim, max_order=max_order):
         
-        # nsym += 1
-        # print(f'{nsym = }')
+    for SymSig in choreo.DiscreteActionSymSignature.DirectTimeSignatures(nbody=NBS.nbody, geodim=NBS.geodim, max_order=max_order):
 
         if skip_SymSig_if(SymSig):
             continue
         
         if SymSig in all_signatures:
             continue
+    
+        print()
+        print(SymSig)
     
         for itry in range(ntries):
 
@@ -1265,7 +1253,9 @@ def FindTimeDirectSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-9, return_best
             # method = "BFGS"
             method = "L-BFGS-B"
             # method = "SLSQP"
-            opt_res = scipy.optimize.minimize(EvalSym, x0, args=(SymSig,), method=method, tol=0.1*hit_tol, callback=None, options={"maxiter":10})
+            opt_res = scipy.optimize.minimize(EvalSym, x0, args=(SymSig,), method=method, tol=0.1*hit_tol, callback=None, options={"maxiter":100})
+            
+            print(opt_res.fun)
 
             best_sol.update((opt_res.x, SymSig), opt_res.fun)
 

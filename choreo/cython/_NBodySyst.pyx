@@ -2618,7 +2618,7 @@ cdef class NBodySyst():
         return segmpos_minmax_np
 
     @cython.final
-    def copy_nosym(self):
+    def copy_nosym(self, double[:,:,::1] segmpos = None):
 
         cdef Py_ssize_t ib
         cdef double[::1] bodymass = np.empty((self.nbody), dtype=np.float64)
@@ -2640,7 +2640,15 @@ cdef class NBodySyst():
 
         NBS.nint = self.nint
 
-        return NBS
+        if segmpos is None:
+
+            return NBS
+
+        else:
+
+            all_bodypos = self.segmpos_to_allbody_noopt(segmpos)
+
+            return NBS, all_bodypos
 
     @cython.final
     def GetFullAABB(
@@ -4760,89 +4768,6 @@ cdef class NBodySyst():
 
     @cython.cdivision(True)
     @cython.final
-    def ComputeSymDefault_old(self, double[:,:,::1] segmpos, ActionSym Sym, Py_ssize_t lnorm = 1, full = False, pos = True):
-
-        if lnorm not in [1,2,22]:
-            raise ValueError(f'ComputeSymDefault only computes L1, L2 or L2 squared norms. Received {lnorm = }.')
-
-        cdef Py_ssize_t ib , iint
-        cdef Py_ssize_t ibp, iintp
-        cdef Py_ssize_t segmbeg, segmend
-        cdef Py_ssize_t isegm
-        cdef ActionSym CSym  
-        cdef int size = self.geodim * self.segm_size
-        cdef np.ndarray[double, ndim=2, mode='c'] trans_pos  = np.empty((self.segm_size, self.geodim), dtype=np.float64)
-        cdef np.ndarray[double, ndim=2, mode='c'] trans_posp = np.empty((self.segm_size, self.geodim), dtype=np.float64)
-
-        cdef double res = 0
-
-        if full:
-            all_iints = range(self.nint_min)
-            n_pts = self.nbody * self.nint_min * self.segm_size
-        else:
-            all_iints = [0]
-            n_pts = self.nbody * self.segm_size
-
-        for ib in range(self.nbody):
-
-            for iint in all_iints:
-
-                # Computing trans_pos
-                isegm = self._bodysegm[ib, iint]
-                if pos:
-                    CSym = Sym * self.intersegm_to_all[ib][iint]
-                else:
-                    CSym = Sym * self.intersegm_to_all[ib][iint].TimeDerivative()
-
-                if CSym.TimeRev > 0:
-                    segmbeg = 0
-                    segmend = self.segm_size
-                else:
-                    segmbeg = 1
-                    segmend = self.segm_size+1
-                    assert self.GreaterNStore
-
-                CSym.TransformSegment(segmpos[isegm,segmbeg:segmend,:], trans_pos)
-
-                # Computing trans_posp
-
-                ibp = Sym._BodyPerm[ib]
-                tnum_target, tden_target = Sym.ApplyTSegm(iint, self.nint_min)
-
-                assert self.nint_min % tden_target == 0
-                iintp = (tnum_target * (self.nint_min // tden_target) + self.nint_min) % self.nint_min
-
-                isegmp = self._bodysegm[ibp, iintp]
-                if pos:
-                    CSym = self.intersegm_to_all[ibp][iintp]
-                else:
-                    CSym = self.intersegm_to_all[ibp][iintp].TimeDerivative()
-
-                if CSym.TimeRev > 0:
-                    segmbeg = 0
-                    segmend = self.segm_size
-                else:
-                    segmbeg = 1
-                    segmend = self.segm_size+1
-                    assert self.GreaterNStore
-
-                CSym.TransformSegment(segmpos[isegmp,segmbeg:segmend,:], trans_posp)
-
-                scipy.linalg.cython_blas.daxpy(&size,&minusone_double,&trans_posp[0,0],&int_one,&trans_pos[0,0],&int_one)
-                if lnorm == 1:
-                    res += scipy.linalg.cython_blas.dasum(&size,&trans_pos[0,0],&int_one)
-                else:
-                    res += scipy.linalg.cython_blas.ddot(&size, &trans_pos[0,0], &int_one, &trans_pos[0,0], &int_one)
-
-        if lnorm == 1:
-            return res / n_pts
-        elif lnorm == 2:
-            return csqrt(res / n_pts)
-        else:
-            return res / n_pts
-
-    @cython.cdivision(True)
-    @cython.final
     def ComputeSymDefault(self, double[:,:,::1] segmpos, ActionSym Sym, Py_ssize_t lnorm = 1, pos = True, full = False):
 
         if lnorm not in [1,2,22]:
@@ -4892,22 +4817,26 @@ cdef class NBodySyst():
                 if CSym.TimeRev > 0:
 
                     tnum, tden = CSym.ApplyT(tbeg, self._nint)
-                    assert self._nint % tden == 0
+                    if (self._nint % tden != 0):
+                        raise ValueError(f"Could not complete ComputeSymDefault: nint needs to be a multiple of {tden}")
                     CTtbeg = tnum * (self._nint // tden)
 
                     tnum, tden = CSym.ApplyT(tend-1, self._nint)
-                    assert self._nint % tden == 0
+                    if (self._nint % tden != 0):
+                        raise ValueError(f"Could not complete ComputeSymDefault: nint needs to be a multiple of {tden}")
                     CTtend = tnum * (self._nint // tden) + 1 
 
                 else:
 
                     tend = (tend + self._nint - 1) % self._nint
                     tnum, tden = CSym.ApplyT(tend, self._nint)
-                    assert self._nint % tden == 0
+                    if (self._nint % tden != 0):
+                        raise ValueError(f"Could not complete ComputeSymDefault: nint needs to be a multiple of {tden}")
                     CTtbeg = tnum * (self._nint // tden)
 
                     tnum, tden = CSym.ApplyT(tbeg, self._nint)
-                    assert self._nint % tden == 0
+                    if (self._nint % tden != 0):
+                        raise ValueError(f"Could not complete ComputeSymDefault: nint needs to be a multiple of {tden}")
                     CTtend = tnum * (self._nint // tden) + 1
 
                 # Computing trans_posp
