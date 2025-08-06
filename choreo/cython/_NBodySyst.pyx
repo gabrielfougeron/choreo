@@ -4857,7 +4857,10 @@ cdef class NBodySyst():
 
                 nint_segm_beg = self.segm_store - segmbeg
 
-                CSym.TransformSegment(segmpos[isegmp,segmbeg:,:], trans_posp[:nint_segm_beg,:])
+                if CSym.TimeRev > 0:
+                    CSym.TransformSegment(segmpos[isegmp,segmbeg:,:], trans_posp[:nint_segm_beg,:])
+                else:
+                    CSym.TransformSegment(segmpos[isegmp,:self.segm_store-segmbeg,:], trans_posp[:nint_segm_beg,:])
 
                 if nint_segm_beg < self.segm_store:
 
@@ -4871,7 +4874,7 @@ cdef class NBodySyst():
 
                     nint_segm_end = self.segm_store - segmend
                     
-                    assert nint_segm_end < nint_segm_beg
+                    assert nint_segm_end <= nint_segm_beg
 
                     if CSym.TimeRev > 0:
                         CSym.TransformSegment(segmpos[isegmp,:segmend,:], trans_posp[nint_segm_end:,:])

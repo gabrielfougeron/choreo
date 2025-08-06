@@ -17,31 +17,42 @@ def main():
     Remove_Different = True
     
     FindTimeReflexionIfPossible = True
+    # FindTimeReflexionIfPossible = False
     
-    max_order = 12
+    refl_dim = [0,1]
     
-    skip_SymSig_if = lambda SymSig : False
+    ntries = 10
+    
+    max_order = 2
+    
+    # skip_SymSig_if = lambda SymSig : False
     
     def skip_SymSig_if(SymSig):
         
         test_OK = True
+        # test_OK = test_OK and (SymSig.BodyPerm[0] == 0)
         # # 
         # for i in range(3):
-        #     test_OK = test_OK and (SymSig.BodyPerm[i] == ((i+1)%3))
+            # test_OK = test_OK and (SymSig.BodyPerm[i] == ((i+1)%3))
+            
+        test_OK = test_OK and (SymSig.BodyPerm[0] == 0)
+        test_OK = test_OK and (SymSig.BodyPerm[1] == 2)
+        test_OK = test_OK and (SymSig.BodyPerm[2] == 1)
+        
         #     
         for i in range(2):
             test_OK = test_OK and (SymSig.SpaceRotSig[i] == -1)
         # 
         # test_OK = test_OK and (SymSig.TimeShiftNum  == 1 )
-        # test_OK = test_OK and (SymSig.TimeShiftDen  == max_order )
+        test_OK = test_OK and (SymSig.TimeShiftDen  == 2)
         # 
-        # if test_OK:
-        #     print(SymSig)
-        #     print()
+        if test_OK:
+            print(SymSig)
+            print()
         
         return not test_OK
     
-    hit_tol = 1e-11
+    hit_tol = 1e-9
 
     Wisdom_file = os.path.join(__PROJECT_ROOT__, "PYFFTW_wisdom.json")
     choreo.find.Load_wisdom_file(Wisdom_file)
@@ -64,7 +75,9 @@ def main():
     all_files = os.listdir(input_folder)
     all_files.sort()
     
-    all_files = ["00040.json"]
+    # all_files = ["00009.json", "00040.json"]
+    # all_files = ["00040.json"]
+    all_files = ["00060.json"]
     
     different_list = []
     No_cvgence_list = []
@@ -92,9 +105,9 @@ def main():
             FindTimeReflexion = (NBS.TimeRev > 0) and FindTimeReflexionIfPossible
             
             if FindTimeReflexion:
-                res = choreo.find.FindTimeRevSymmetry(NBS, segmpos, ntries = 10, hit_tol = hit_tol)
+                res = choreo.find.FindTimeRevSymmetry(NBS, segmpos, ntries = ntries, refl_dim = refl_dim, hit_tol = hit_tol)
             else:
-                res = choreo.find.FindTimeDirectSymmetry(NBS, segmpos, ntries = 1, max_order = max_order, skip_SymSig_if = skip_SymSig_if, hit_tol = hit_tol)
+                res = choreo.find.FindTimeDirectSymmetry(NBS, segmpos, ntries = ntries, max_order = max_order, skip_SymSig_if = skip_SymSig_if, hit_tol = hit_tol)
 
             if res is None:
                 print(f"Could not find {"reflexion" if FindTimeReflexion else "non-reflexion"} symmetry")

@@ -449,7 +449,7 @@ cdef class DiscreteActionSymSignature():
                 for n2DBlocks in range(max_n2DBlocks+1):
 
                     n1DBlocks = geodim - 2*n2DBlocks
-                    max_n_half_turns = n1DBlocks // 2
+                    max_n_half_turns = n1DBlocks
 
                     if n2DBlocks == 0:
                         rot_sigs_iterator = [tuple()]
@@ -469,9 +469,10 @@ cdef class DiscreteActionSymSignature():
 
                         for n_half_turns in range(max_n_half_turns+1):
 
-                            for i in range(2*n2DBlocks, geodim-2*n_half_turns):
+                            for i in range(2*n2DBlocks, geodim-n_half_turns):
                                 SpaceRotSig[i] = 1
-                            for i in range(geodim-2*n_half_turns,geodim):
+
+                            for i in range(geodim-n_half_turns,geodim):
                                 SpaceRotSig[i] = -1
 
                             SymSig = DiscreteActionSymSignature(
@@ -1999,6 +2000,61 @@ cdef class ActionSym():
         free(ipiv)
 
         return res
+
+    @cython.final
+    @staticmethod
+    def DirectSpaceRot(double[::1] params):
+        """Parametrization of direct isometries.
+
+        This function computes a direct isometry :math:`R \in SO(n)` from a set of :math:`\\frac{n(n-1)}{2}` parameters using the Cayley transform:
+
+        TODO
+
+        .. math::
+            R = (I_n-A)^{-1}(I_n+A)
+
+        where :math:`A` denotes the skew-symmetric matrix whose upper triangular entries are given in ``params``.
+
+        Example
+        -------
+
+        >>> R = choreo.ActionSym.SurjectiveDirectSpaceRot(np.array([1.,2.,3.]))
+        >>> np.linalg.norm(np.matmul(R,R.T) - np.identity(3)) < 1e-14
+        np.True_
+        >>> abs(np.linalg.det(R) - 1.) < 1e-14
+        np.True_
+
+        Parameters
+        ----------
+        params : :class:`numpy:numpy.ndarray`:class:`(shape = n*(n-1)/2, dtype = np.float64)`
+            Upper part of the Cayley skew-symmetric matrix.
+        
+        Returns
+        -------
+        :class:`numpy:numpy.ndarray`:class:`(shape = (n,n), dtype = np.float64)`
+            A direct orthonormal transformation.
+        
+        """ 
+
+        cdef Py_ssize_t i,j,k
+
+        cdef double x = 1+8*params.shape[0]
+        cdef int n = <int> cfloor((1+csqrt(x))/2)
+        cdef int info
+        
+        cdef double[:,::1] ima = np.empty((n,n), dtype=np.float64)
+
+        k = 0
+        for i in range(n):
+            ima[i,i] = 1.
+            for j in range(i+1,n):
+
+                ima[i,j] =  params[k]
+                ima[j,i] = -params[k]
+
+                k += 1
+
+        return np.linalg.solve(ima, ima.T)
 
     @cython.final
     @staticmethod

@@ -1161,7 +1161,8 @@ def FindTimeRevSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-9, refl_dim = [1]
         BodyPerm = args[0]
         
         dt = SymParams[0]
-        rot = ActionSym.SurjectiveDirectSpaceRot(SymParams[1:])
+        # rot = ActionSym.SurjectiveDirectSpaceRot(SymParams[1:])
+        rot = ActionSym.DirectSpaceRot(SymParams)
         refl = np.identity(NBS.geodim)
         
         for idim in refl_dim:
@@ -1229,19 +1230,26 @@ def FindTimeDirectSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-9, random_init
     
     params_buf_init = None
     
-    # method = "BFGS"
-    method = "L-BFGS-B"
+    method = "BFGS"
+    # method = "L-BFGS-B"
     # method = "SLSQP"
         
     nint_init = NBS.nint
 
     def Compute_Sym(SymParams, SymSig):
-        SymSig.basis = ActionSym.SurjectiveDirectSpaceRot(SymParams)
+        
+        # SymSig.basis = ActionSym.SurjectiveDirectSpaceRot(SymParams)
+        SymSig.basis = ActionSym.DirectSpaceRot(SymParams)
+        
         return SymSig.ActionSym
 
     def EvalSym(SymParams, *args):
         Sym = Compute_Sym(SymParams, args[0])
-        return NBS.ComputeSymDefault(args[1], Sym, lnorm = 22, full=False)
+        res = NBS.ComputeSymDefault(args[1], Sym, lnorm = 22, full=False)
+        
+        # print(res)
+        
+        return res
     
     n_SymParams = (NBS.geodim * (NBS.geodim-1) // 2)
 
@@ -1260,7 +1268,7 @@ def FindTimeDirectSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-9, random_init
         Sym = node.get('Sym')
         SymSig = Sym.signature
         all_signatures.append(SymSig)
-
+        
     for SymSig in choreo.DiscreteActionSymSignature.DirectTimeSignatures(nbody=NBS.nbody, geodim=NBS.geodim, max_order=max_order):
 
         if skip_SymSig_if(SymSig):
@@ -1270,9 +1278,7 @@ def FindTimeDirectSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-9, random_init
             continue
 
         nint_new = math.lcm(nint_init, SymSig.TimeShiftDen)
-        # 
-        # print(f'{nint_new = }')
-        # 
+
         if nint_new > nint_init:
                     
             if params_buf_init is None:
