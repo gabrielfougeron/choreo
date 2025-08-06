@@ -26,6 +26,8 @@ cdef class DiscreteActionSymSignature():
 
     cdef double[:,::1] _basis
 
+    cpdef DiscreteActionSymSignature copy(DiscreteActionSymSignature self)
+
     cpdef bint IsWellFormed(DiscreteActionSymSignature self, double atol = *)
 
 

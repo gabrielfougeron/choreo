@@ -651,7 +651,7 @@ def ChoreoLoadSymList(params_dict):
 
 def FindNextMaxNumFile(store_folder, file_basename):
     
-    max_num_file = -1
+    max_num_file = 0
     
     for dirpath, dirnames, filenames in os.walk(store_folder):
         
@@ -1066,6 +1066,8 @@ def Check_Duplicates(NBS, segmpos, params, hash_dict, action_dict, store_folder,
     """
     Checks whether there is a duplicate of a given trajecory in the provided folder
     """
+    
+    IsCandidate = False
 
     if Duplicates_Hash:
 
@@ -1133,7 +1135,7 @@ def Write_wisdom_file(Wisdom_file):
             jsonString = json.dumps(Wis_dict, indent=4, sort_keys=False)
             jsonFile.write(jsonString)
 
-def FindTimeRevSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-9, refl_dim = [0], return_best = False, random_init = True):
+def FindTimeRevSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-9, refl_dim = [1], return_best = False, random_init = True):
     
     if isinstance(refl_dim, int):
         refl_dim = [refl_dim]
@@ -1141,7 +1143,18 @@ def FindTimeRevSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-9, refl_dim = [0]
     if NBS.TimeRev < 0 : # TimeRevSymmetry was already found
         return
     
+    # method = "BFGS"
+    method = "L-BFGS-B"
+    # method = "SLSQP"
+    
     params_ini = NBS.segmpos_to_params(semgpos)
+    
+    tol = 1e-1    
+    tol_list = []
+    while (tol > hit_tol):
+        tol_list.append(tol)
+        tol *= 1e-3
+    tol_list.append(hit_tol)
     
     def Compute_Sym(SymParams, *args):
         
@@ -1191,11 +1204,16 @@ def FindTimeRevSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-9, refl_dim = [0]
                 x0 = np.random.random(n_SymParams)
             else:
                 x0 = np.zeros(n_SymParams,dtype=np.float64)
-    
-            # method = "BFGS"
-            method = "L-BFGS-B"
-            # method = "SLSQP"
-            opt_res = scipy.optimize.minimize(EvalSym, x0, args=(BodyPerm,), method=method, tol= 0.1*hit_tol, callback=None, options={"maxiter":100})
+
+            for tol in tol_list:
+
+                opt_res = scipy.optimize.minimize(EvalSym, x0, args=(BodyPerm,), method=method, tol=tol, callback=None, options={"maxiter":100})
+                best_sol.update((opt_res.x, BodyPerm), opt_res.fun)
+                
+                if opt_res.fun < tol:
+                    x0 = opt_res.x
+                else:
+                    break
 
             best_sol.update((opt_res.x, BodyPerm), opt_res.fun)
 
@@ -1206,26 +1224,34 @@ def FindTimeRevSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-9, refl_dim = [0]
         x, f, f_norm = best_sol.get_best()    
         return Compute_Sym(x[0], x[1])
  
-def FindTimeDirectSymmetry(NBS, semgpos, params_buf_init = None, ntries = 1, hit_tol = 1e-9, random_init = True, max_order = 5, skip_SymSig_if = lambda SymSig:False):
+def FindTimeDirectSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-9, random_init = True, max_order = 5, skip_SymSig_if = lambda SymSig:False):
     # If a symmetry is found, NBS on exit is changed. This is on purpose to chain with a call to Find_Choreo with ReconvergeSol = True
     
-    if params_buf_init is None:
-        params_buf_init = NBS.segmpos_to_params(semgpos)
+    params_buf_init = None
+    
+    # method = "BFGS"
+    method = "L-BFGS-B"
+    # method = "SLSQP"
         
     nint_init = NBS.nint
 
-    def Compute_Sym(SymParams, *args):
-        
-        SymSig = args[0]
-
+    def Compute_Sym(SymParams, SymSig):
         SymSig.basis = ActionSym.SurjectiveDirectSpaceRot(SymParams)
-        
-        Sym = SymSig.ActionSym
+        return SymSig.ActionSym
 
-        return Sym
+    def EvalSym(SymParams, *args):
+        Sym = Compute_Sym(SymParams, args[0])
+        return NBS.ComputeSymDefault(args[1], Sym, lnorm = 22, full=False)
     
     n_SymParams = (NBS.geodim * (NBS.geodim-1) // 2)
-    
+
+    tol = 1e-1    
+    tol_list = []
+    while (tol > hit_tol):
+        tol_list.append(tol)
+        tol *= 1e-3
+    tol_list.append(hit_tol)
+
     best_sol = choreo.scipy_plus.nonlin.current_best((np.zeros(n_SymParams,dtype=np.float64),np.array(range(NBS.nbody))), np.inf)
     
     CayleyGraph = choreo.ActionSym.BuildCayleyGraph(NBS.nbody, NBS.geodim, GeneratorList = NBS.Sym_list)
@@ -1234,7 +1260,7 @@ def FindTimeDirectSymmetry(NBS, semgpos, params_buf_init = None, ntries = 1, hit
         Sym = node.get('Sym')
         SymSig = Sym.signature
         all_signatures.append(SymSig)
-        
+
     for SymSig in choreo.DiscreteActionSymSignature.DirectTimeSignatures(nbody=NBS.nbody, geodim=NBS.geodim, max_order=max_order):
 
         if skip_SymSig_if(SymSig):
@@ -1244,8 +1270,13 @@ def FindTimeDirectSymmetry(NBS, semgpos, params_buf_init = None, ntries = 1, hit
             continue
 
         nint_new = math.lcm(nint_init, SymSig.TimeShiftDen)
-        
+        # 
+        # print(f'{nint_new = }')
+        # 
         if nint_new > nint_init:
+                    
+            if params_buf_init is None:
+                params_buf_init = NBS.segmpos_to_params(semgpos)
             
             nint_fac_new = nint_new // (2 * NBS.nint_min)
 
@@ -1259,28 +1290,26 @@ def FindTimeDirectSymmetry(NBS, semgpos, params_buf_init = None, ntries = 1, hit
             
             NBS.nint = nint_init
             segmpos_new = semgpos
-            
-        def EvalSym(SymParams, *args):
-            Sym = Compute_Sym(SymParams, *args)
-            return NBS.ComputeSymDefault(segmpos_new, Sym, lnorm = 22, full=False)
-    
+
         for itry in range(ntries):
 
             if random_init:
                 x0 = np.random.random(n_SymParams)
             else:
                 x0 = np.zeros(n_SymParams,dtype=np.float64)
-                
-            # method = "BFGS"
-            method = "L-BFGS-B"
-            # method = "SLSQP"
-            opt_res = scipy.optimize.minimize(EvalSym, x0, args=(SymSig,), method=method, tol=0.1*hit_tol, callback=None, options={"maxiter":100})
             
-            # print(opt_res.fun)
+            for tol in tol_list:
 
-            best_sol.update((opt_res.x, SymSig), opt_res.fun)
+                opt_res = scipy.optimize.minimize(EvalSym, x0, args=(SymSig, segmpos_new), method=method, tol=tol, callback=None, options={"maxiter":100})
+                best_sol.update((opt_res.x, SymSig), opt_res.fun)
 
-            if opt_res.fun < hit_tol:
+                if opt_res.fun < tol:
+                    x0 = opt_res.x
+                else:
+                    break
+
+            else:
+                
                 return Compute_Sym(opt_res.x, SymSig), segmpos_new
 
     NBS.nint = nint_init

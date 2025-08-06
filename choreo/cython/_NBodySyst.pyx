@@ -4789,8 +4789,8 @@ cdef class NBodySyst():
         cdef Py_ssize_t isegm
         cdef ActionSym CSym  
         cdef int size = self.geodim * self.segm_store
-        cdef np.ndarray[double, ndim=2, mode='c'] trans_pos  = np.empty((self.segm_store, self.geodim), dtype=np.float64)
-        cdef np.ndarray[double, ndim=2, mode='c'] trans_posp = np.empty((self.segm_store, self.geodim), dtype=np.float64)
+        cdef double[:,::1] trans_pos  = np.empty((self.segm_store, self.geodim), dtype=np.float64)
+        cdef double[:,::1] trans_posp = np.empty((self.segm_store, self.geodim), dtype=np.float64)
 
         cdef double res = 0
 
@@ -4871,11 +4871,15 @@ cdef class NBodySyst():
 
                     nint_segm_end = self.segm_store - segmend
                     
-                    assert nint_segm_end <= nint_segm_beg
+                    assert nint_segm_end < nint_segm_beg
 
-                    CSym.TransformSegment(segmpos[isegmp,:segmend,:], trans_posp[nint_segm_end:,:])
+                    if CSym.TimeRev > 0:
+                        CSym.TransformSegment(segmpos[isegmp,:segmend,:], trans_posp[nint_segm_end:,:])
+                    else:
+                        CSym.TransformSegment(segmpos[isegmp,self.segm_store-segmend:,:], trans_posp[nint_segm_end:,:])
 
                 scipy.linalg.cython_blas.daxpy(&size,&minusone_double,&trans_posp[0,0],&int_one,&trans_pos[0,0],&int_one)
+
                 if lnorm == 1:
                     res += scipy.linalg.cython_blas.dasum(&size,&trans_pos[0,0],&int_one)
                 else:

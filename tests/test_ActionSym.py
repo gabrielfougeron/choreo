@@ -18,6 +18,7 @@
 
 import pytest
 from .test_config import *
+import itertools
 import numpy as np
 import scipy
 import networkx
@@ -282,6 +283,17 @@ def test_DiscreteActionSymSignature_generator(float64_tols):
 
     """
         
-    for SymSig in choreo.DiscreteActionSymSignature.DirectTimeSignatures(nbody=2, geodim=6, max_order=10):
+    nbody = 5
+    geodim = 6
+    max_order = 5
+        
+    all_SymSig = list(choreo.DiscreteActionSymSignature.DirectTimeSignatures(nbody=nbody, geodim=geodim, max_order=max_order))
+        
+    for SymSig in all_SymSig:
 
         assert SymSig.IsWellFormed(atol = float64_tols.atol)
+        assert SymSig.order <= max_order
+
+    for SymSig1, SymSig2 in itertools.combinations(all_SymSig, 2):
+        
+        assert SymSig1 != SymSig2

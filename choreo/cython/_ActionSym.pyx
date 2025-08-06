@@ -78,6 +78,36 @@ cdef class DiscreteActionSymSignature():
         self.TimeShiftDen = TimeShiftDen
         self._basis = basis
 
+    @cython.final
+    cpdef DiscreteActionSymSignature copy(DiscreteActionSymSignature self):
+
+        cdef DiscreteActionSymSignature res
+
+        if self._basis is None:
+
+            res = DiscreteActionSymSignature(
+                self._BodyPerm.copy()   ,
+                self._SpaceRotSig.copy(),
+                self.n2DBlocks          ,
+                self.TimeRev            ,
+                self.TimeShiftNum       ,
+                self.TimeShiftDen       ,
+            )
+        
+        else:
+
+            res = DiscreteActionSymSignature(
+                self._BodyPerm.copy()   ,
+                self._SpaceRotSig.copy(),
+                self.n2DBlocks          ,
+                self.TimeRev            ,
+                self.TimeShiftNum       ,
+                self.TimeShiftDen       ,
+                self._basis.copy()      ,
+            )
+
+        return res
+
     def __eq__(DiscreteActionSymSignature self, DiscreteActionSymSignature other):
         """
         TODO
@@ -165,8 +195,6 @@ cdef class DiscreteActionSymSignature():
         cdef Py_ssize_t num, den
         cdef Py_ssize_t last_num, last_den
 
-        cdef double[:,::1] basis
-
         res = res and (self.TimeRev != 0)
         res = res and (self.TimeShiftNum >= 0)
         res = res and (self.TimeShiftDen >  0)
@@ -215,7 +243,7 @@ cdef class DiscreteActionSymSignature():
             res = res and (self._SpaceRotSig[i] <= last_num)
             last_num = self._SpaceRotSig[i]
 
-        basis = self.basis
+        cdef double[:,::1] basis = self.basis
 
         res = res and (self._SpaceRotSig.shape[0] == basis.shape[0])
         res = res and (self._SpaceRotSig.shape[0] == basis.shape[1])
@@ -405,11 +433,11 @@ cdef class DiscreteActionSymSignature():
         cdef tuple rot_sigs
 
         cdef Py_ssize_t max_n2DBlocks = geodim // 2
-        cdef Py_ssize_t max_n_half_turns
 
         cdef Py_ssize_t order
         cdef Py_ssize_t i
-        cdef Py_ssize_t n2DBlocks, TimeShiftNum, TimeShiftDen
+        cdef Py_ssize_t n2DBlocks, TimeShiftNum, TimeShiftDen,
+        cdef Py_ssize_t max_n_half_turns, n1DBlocks
         cdef Py_ssize_t[::1] BodyPerm
         cdef Py_ssize_t[::1] SpaceRotSig = np.empty(geodim, dtype=np.intp)
 
@@ -456,14 +484,10 @@ cdef class DiscreteActionSymSignature():
                             )
 
                             order = SymSig.order
-                            
-                            # print(SymSig)
-                            # print(f'{order = }')
-                            # assert SymSig.IsWellFormed()
 
                             if order <= max_order:
 
-                                yield SymSig
+                                yield SymSig.copy()
 
 @cython.auto_pickle(False)
 @cython.final
@@ -1801,7 +1825,7 @@ cdef class ActionSym():
                     perm[c[i]] = perm[i]
                     perm[i] = tmp
 
-                yield perm_np
+                yield perm_np.copy()
 
                 c[i] += 1
                 i = 1

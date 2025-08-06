@@ -3,17 +3,46 @@ import numpy as np
 import threadpoolctl
 import choreo 
 import json
+import math
+import shutil
 
 __PROJECT_ROOT__ = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))
 
 def main():
         
-    Remove_Original = False
-    # Remove_Original = True
+    # Overwrite_Original = False
+    Overwrite_Original = True
     
     # Remove_Different = False
     Remove_Different = True
     
+    FindTimeReflexionIfPossible = True
+    
+    max_order = 12
+    
+    skip_SymSig_if = lambda SymSig : False
+    
+    def skip_SymSig_if(SymSig):
+        
+        test_OK = True
+        # # 
+        # for i in range(3):
+        #     test_OK = test_OK and (SymSig.BodyPerm[i] == ((i+1)%3))
+        #     
+        for i in range(2):
+            test_OK = test_OK and (SymSig.SpaceRotSig[i] == -1)
+        # 
+        # test_OK = test_OK and (SymSig.TimeShiftNum  == 1 )
+        # test_OK = test_OK and (SymSig.TimeShiftDen  == max_order )
+        # 
+        # if test_OK:
+        #     print(SymSig)
+        #     print()
+        
+        return not test_OK
+    
+    hit_tol = 1e-11
+
     Wisdom_file = os.path.join(__PROJECT_ROOT__, "PYFFTW_wisdom.json")
     choreo.find.Load_wisdom_file(Wisdom_file)
     
@@ -21,18 +50,21 @@ def main():
     
     # input_folder = os.path.join(Workspace_folder, "test")    
     input_folder = os.path.join(Workspace_folder, "CLI solutions")    
+    # input_folder = os.path.join(Workspace_folder, "ReflexionSymmetry")    
+    
     # input_folder = os.path.join(Workspace_folder, "GUI solutions")    
     
-    
-    output_folder = os.path.join(Workspace_folder, "ReflexionSymmetry")    
+    output_folder = os.path.join(Workspace_folder, "AdditionalSym")    
     params_filename = os.path.join(Workspace_folder, "choreo_config_reconverge.json")
     with open(params_filename) as jsonFile:
         params_dict = json.load(jsonFile)
         
     params_dict["Solver_Optim"]["n_opt"] = 1
-    
+    # 
     all_files = os.listdir(input_folder)
     all_files.sort()
+    
+    all_files = ["00040.json"]
     
     different_list = []
     No_cvgence_list = []
@@ -49,7 +81,6 @@ def main():
                     
         print()
         print(file_basename)
-        # print()
 
         NBS, segmpos = choreo.NBodySyst.FromSolutionFile(full_in_file_basename)
         
@@ -57,24 +88,24 @@ def main():
 
             with open(os.path.join(input_folder, thefile)) as jsonFile:
                 extra_args_dict = json.load(jsonFile)
+                
+            FindTimeReflexion = (NBS.TimeRev > 0) and FindTimeReflexionIfPossible
+            
+            if FindTimeReflexion:
+                res = choreo.find.FindTimeRevSymmetry(NBS, segmpos, ntries = 10, hit_tol = hit_tol)
+            else:
+                res = choreo.find.FindTimeDirectSymmetry(NBS, segmpos, ntries = 1, max_order = max_order, skip_SymSig_if = skip_SymSig_if, hit_tol = hit_tol)
 
-            params_buf = NBS.segmpos_to_params(segmpos)
-            NBS.ForceGreaterNStore = True
-            
-            segmpos = NBS.params_to_segmpos(params_buf)
-            
-            if NBS.TimeRev < 0:
-                continue
-            
-            res = choreo.find.FindTimeRevSymmetry(NBS, segmpos, refl_dim=[1], ntries = 10)
-            
             if res is None:
-                print("Could not find TimeRev symmetry")
+                print(f"Could not find {"reflexion" if FindTimeReflexion else "non-reflexion"} symmetry")
                 No_SymFound_list.append(file_basename)
                 continue
             
-            Sym, segmpos_dt = res
-
+            else:
+                print(f"Found {"reflexion" if FindTimeReflexion else "non-reflexion"} symmetry")
+                print()
+                Sym, segmpos = res
+                
             Sym_list = [choreo.ActionSym.FromDict(Symp) for Symp in extra_args_dict["Sym_list"]]
             Sym_list.append(Sym)
 
@@ -83,13 +114,13 @@ def main():
                 "ReconvergeSol" : True          ,
                 "nint_fac_init" : None          ,
                 "NBS_ini"       : NBS           ,
-                "segmpos_ini"   : segmpos_dt    ,
+                "segmpos_ini"   : segmpos       ,
                 "Sym_list"      : Sym_list      ,
                 "mass"          : np.array(extra_args_dict["bodymass"]),
                 "charge"        : np.array(extra_args_dict["bodycharge"]),
                 "AddNumberToOutputName" : False ,
                 "file_basename" : file_basename ,
-                # "save_first_init" : True        ,
+                "disp_scipy_opt" : True         ,
                 "Look_for_duplicates" : False   ,
             })
         
@@ -123,11 +154,13 @@ def main():
                         except:
                             pass
                     
-            if Remove_Original and Solutions_are_same:
+            if Overwrite_Original and Solutions_are_same:
 
                 for ext in ['.json','.npy','.png']:                        
                     try:
-                        os.remove(full_in_file_basename+ext)
+                        shutil.copyfile(full_out_file_basename+ext, full_in_file_basename+ext)
+                        os.remove(full_out_file_basename+ext)
+                        
                     except:
                         pass
                     
