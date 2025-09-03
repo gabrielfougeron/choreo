@@ -30,9 +30,11 @@ jobs:
           arch: x64
 
       - name: Install LibOMP
-        if: matrix.os == 'macos-13' || matrix.os == 'macos-14'
+        if: ${{ (matrix.os == 'macos-13') || (matrix.os == 'macos-14')}}
         run: |
           brew install libomp
+          export LDFLAGS="-L/usr/local/opt/libomp/lib"
+          export CPPFLAGS="-I/usr/local/opt/libomp/include"
 
       # Used to host cibuildwheel
       - uses: actions/setup-python@v5
