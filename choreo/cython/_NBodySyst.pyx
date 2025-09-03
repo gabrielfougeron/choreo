@@ -942,7 +942,7 @@ cdef class NBodySyst():
         self.ChooseLoopGen()
         self.gensegm_to_all = AccumulateSegmSourceToTargetSym(self.SegmGraph, nbody, geodim, self.nint_min, self.nsegm, self._gensegm_to_iint, self._gensegm_to_body)
         self.GatherInterSym()
-
+        
         BinarySegm = FindAllBinarySegments(self.intersegm_to_all, nbody, self.nsegm, self.nint_min, self._intersegm_to_body, self._bodysegm, bodycharge)
 
         self.nbin_segm_tot, self.nbin_segm_unique = CountSegmentBinaryInteractions(BinarySegm, self.nsegm)

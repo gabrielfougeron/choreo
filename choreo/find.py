@@ -1135,17 +1135,13 @@ def Write_wisdom_file(Wisdom_file):
             jsonString = json.dumps(Wis_dict, indent=4, sort_keys=False)
             jsonFile.write(jsonString)
 
-def FindTimeRevSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-9, refl_dim = [1], return_best = False, random_init = True):
+def FindTimeRevSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-9, refl_dim = [1], return_best = False, random_init = True, method = "BFGS"):
     
     if isinstance(refl_dim, int):
         refl_dim = [refl_dim]
     
     if NBS.TimeRev < 0 : # TimeRevSymmetry was already found
         return
-    
-    # method = "BFGS"
-    method = "L-BFGS-B"
-    # method = "SLSQP"
     
     params_ini = NBS.segmpos_to_params(semgpos)
     
@@ -1161,8 +1157,7 @@ def FindTimeRevSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-9, refl_dim = [1]
         BodyPerm = args[0]
         
         dt = SymParams[0]
-        # rot = ActionSym.SurjectiveDirectSpaceRot(SymParams[1:])
-        rot = ActionSym.DirectSpaceRot(SymParams)
+        rot = ActionSym.SurjectiveDirectSpaceRot(SymParams[1:])
         refl = np.identity(NBS.geodim)
         
         for idim in refl_dim:
@@ -1225,31 +1220,19 @@ def FindTimeRevSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-9, refl_dim = [1]
         x, f, f_norm = best_sol.get_best()    
         return Compute_Sym(x[0], x[1])
  
-def FindTimeDirectSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-9, random_init = True, max_order = 5, skip_SymSig_if = lambda SymSig:False):
+def FindTimeDirectSymmetry(NBS, semgpos, ntries = 1, hit_tol = 1e-9, random_init = True, max_order = 5, skip_SymSig_if = lambda SymSig:False, method = "BFGS"):
     # If a symmetry is found, NBS on exit is changed. This is on purpose to chain with a call to Find_Choreo with ReconvergeSol = True
     
     params_buf_init = None
-    
-    method = "BFGS"
-    # method = "L-BFGS-B"
-    # method = "SLSQP"
-        
     nint_init = NBS.nint
 
     def Compute_Sym(SymParams, SymSig):
-        
-        # SymSig.basis = ActionSym.SurjectiveDirectSpaceRot(SymParams)
         SymSig.basis = ActionSym.DirectSpaceRot(SymParams)
-        
         return SymSig.ActionSym
 
     def EvalSym(SymParams, *args):
         Sym = Compute_Sym(SymParams, args[0])
-        res = NBS.ComputeSymDefault(args[1], Sym, lnorm = 22, full=False)
-        
-        # print(res)
-        
-        return res
+        return NBS.ComputeSymDefault(args[1], Sym, lnorm = 22, full=False)
     
     n_SymParams = (NBS.geodim * (NBS.geodim-1) // 2)
 

@@ -16,41 +16,49 @@ def main():
     # Remove_Different = False
     Remove_Different = True
     
-    FindTimeReflexionIfPossible = True
-    # FindTimeReflexionIfPossible = False
+    FindTimeReversalIfPossible = True
+    # FindTimeReversalIfPossible = False
     
-    refl_dim = [0,1]
+    # ReconvergeAnyway = True
+    ReconvergeAnyway = False
     
-    ntries = 10
+    refl_dim = [1]
     
-    max_order = 2
+    ntries_TimeRev = 10
+    ntries_TimeDirect = 1
     
-    # skip_SymSig_if = lambda SymSig : False
+    method = "BFGS"
+    # method = "L-BFGS-B"
+    # method = "SLSQP"
     
-    def skip_SymSig_if(SymSig):
-        
-        test_OK = True
-        # test_OK = test_OK and (SymSig.BodyPerm[0] == 0)
-        # # 
-        # for i in range(3):
-            # test_OK = test_OK and (SymSig.BodyPerm[i] == ((i+1)%3))
-            
-        test_OK = test_OK and (SymSig.BodyPerm[0] == 0)
-        test_OK = test_OK and (SymSig.BodyPerm[1] == 2)
-        test_OK = test_OK and (SymSig.BodyPerm[2] == 1)
-        
-        #     
-        for i in range(2):
-            test_OK = test_OK and (SymSig.SpaceRotSig[i] == -1)
-        # 
-        # test_OK = test_OK and (SymSig.TimeShiftNum  == 1 )
-        test_OK = test_OK and (SymSig.TimeShiftDen  == 2)
-        # 
-        if test_OK:
-            print(SymSig)
-            print()
-        
-        return not test_OK
+    max_order = 7
+    
+    skip_SymSig_if = lambda SymSig : False
+    
+    # def skip_SymSig_if(SymSig):
+    #     
+    #     test_OK = True
+    #     # test_OK = test_OK and (SymSig.BodyPerm[0] == 0)
+    #     # # 
+    #     # for i in range(3):
+    #         # test_OK = test_OK and (SymSig.BodyPerm[i] == ((i+1)%3))
+    #         
+    #     test_OK = test_OK and (SymSig.BodyPerm[0] == 0)
+    #     test_OK = test_OK and (SymSig.BodyPerm[1] == 2)
+    #     test_OK = test_OK and (SymSig.BodyPerm[2] == 1)
+    #     
+    #     #     
+    #     for i in range(2):
+    #         test_OK = test_OK and (SymSig.SpaceRotSig[i] == -1)
+    #     # 
+    #     # test_OK = test_OK and (SymSig.TimeShiftNum  == 1 )
+    #     test_OK = test_OK and (SymSig.TimeShiftDen  == 2)
+    #     # 
+    #     if test_OK:
+    #         print(SymSig)
+    #         print()
+    #     
+    #     return not test_OK
     
     hit_tol = 1e-9
 
@@ -61,6 +69,7 @@ def main():
     
     # input_folder = os.path.join(Workspace_folder, "test")    
     input_folder = os.path.join(Workspace_folder, "CLI solutions")    
+    # input_folder = os.path.join(Workspace_folder, "CLI solutions/No_Sym")    
     # input_folder = os.path.join(Workspace_folder, "ReflexionSymmetry")    
     
     # input_folder = os.path.join(Workspace_folder, "GUI solutions")    
@@ -71,13 +80,13 @@ def main():
         params_dict = json.load(jsonFile)
         
     params_dict["Solver_Optim"]["n_opt"] = 1
-    # 
+    
     all_files = os.listdir(input_folder)
     all_files.sort()
     
     # all_files = ["00009.json", "00040.json"]
     # all_files = ["00040.json"]
-    all_files = ["00060.json"]
+    # all_files = ["00053.json"]
     
     different_list = []
     No_cvgence_list = []
@@ -102,25 +111,27 @@ def main():
             with open(os.path.join(input_folder, thefile)) as jsonFile:
                 extra_args_dict = json.load(jsonFile)
                 
-            FindTimeReflexion = (NBS.TimeRev > 0) and FindTimeReflexionIfPossible
+            Sym_list = [choreo.ActionSym.FromDict(Symp) for Symp in extra_args_dict["Sym_list"]]
+                
+            FindTimeReversal = (NBS.TimeRev > 0) and FindTimeReversalIfPossible
             
-            if FindTimeReflexion:
-                res = choreo.find.FindTimeRevSymmetry(NBS, segmpos, ntries = ntries, refl_dim = refl_dim, hit_tol = hit_tol)
+            if FindTimeReversal:
+                res = choreo.find.FindTimeRevSymmetry(NBS, segmpos, ntries = ntries_TimeRev, refl_dim = refl_dim, hit_tol = hit_tol, method = method)
             else:
-                res = choreo.find.FindTimeDirectSymmetry(NBS, segmpos, ntries = ntries, max_order = max_order, skip_SymSig_if = skip_SymSig_if, hit_tol = hit_tol)
+                res = choreo.find.FindTimeDirectSymmetry(NBS, segmpos, ntries = ntries_TimeDirect, max_order = max_order, skip_SymSig_if = skip_SymSig_if, hit_tol = hit_tol, method = method)
 
             if res is None:
-                print(f"Could not find {"reflexion" if FindTimeReflexion else "non-reflexion"} symmetry")
+                print(f"Could not find {"reflexion" if FindTimeReversal else "non-reflexion"} symmetry")
                 No_SymFound_list.append(file_basename)
-                continue
+                
+                if not ReconvergeAnyway:
+                    continue
             
             else:
-                print(f"Found {"reflexion" if FindTimeReflexion else "non-reflexion"} symmetry")
+                print(f"Found {"reflexion" if FindTimeReversal else "non-reflexion"} symmetry")
                 print()
                 Sym, segmpos = res
-                
-            Sym_list = [choreo.ActionSym.FromDict(Symp) for Symp in extra_args_dict["Sym_list"]]
-            Sym_list.append(Sym)
+                Sym_list.append(Sym)
 
             extra_args_dict.update({
                 "store_folder"  : output_folder ,
@@ -133,7 +144,7 @@ def main():
                 "charge"        : np.array(extra_args_dict["bodycharge"]),
                 "AddNumberToOutputName" : False ,
                 "file_basename" : file_basename ,
-                "disp_scipy_opt" : True         ,
+                # "disp_scipy_opt" : True         ,
                 "Look_for_duplicates" : False   ,
             })
         

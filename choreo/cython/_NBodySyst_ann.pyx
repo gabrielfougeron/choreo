@@ -13,7 +13,6 @@ cimport cython
 
 from libc.stdlib cimport malloc, free, rand
 from libc.string cimport memset
-from libc.stdint cimport uintptr_t
 
 cdef extern from "limits.h":
     int RAND_MAX

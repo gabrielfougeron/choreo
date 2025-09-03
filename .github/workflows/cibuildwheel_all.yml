@@ -1,42 +1,100 @@
-name: Build whl for all platforms and architectures using cibuildwheel
+name: Build using cibuildwheel
 
-on:
-  workflow_dispatch:
-  # push:
-  #   branches:    
-  #     - main
+env:
+  python_version_to_cibw_build: '{"3.10" : "cp310*", "3.11" : "cp311*", "3.12" : "cp312*", "3.13" : "cp313*", "3.14" : "cp314*", }'
+  main-python-version: '3.12'
+
+on: workflow_dispatch
+
+permissions:
+  contents: read
 
 jobs:
   build_wheels:
-    name: Build wheels on ${{ matrix.os }}
+    name: Build python ${{ matrix.python-version }} wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     continue-on-error: true
     strategy:
       matrix:
-        # macos-13 is an intel runner, macos-14 is apple silicon
-        os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, windows-11-arm, macos-13, macos-14]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
+        os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, windows-11-arm, macos-13, macos-latest]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: 'true'
+
+      - uses: TheMrMilchmann/setup-msvc-dev@v3
+        if: ${{ (matrix.os == 'windows-latest') || (matrix.os == 'windows-11-arm') }}
+        with:
+          arch: x64
 
       - name: Install LibOMP
         if: matrix.os == 'macos-13' || matrix.os == 'macos-14'
         run: |
           brew install libomp
 
+      # Used to host cibuildwheel
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.main-python-version }}
+
+      - name: Specific Windows cibuildwheel env variables setup
+        if: ${{ (matrix.os == 'windows-latest') || (matrix.os == 'windows-11-arm') }}
+        run: |
+          echo CIBW_TEST_COMMAND='' >> $GITHUB_ENV
+
       - name: Build wheels
-        uses: pypa/cibuildwheel@v3.0.1
-        # env:
-        #   CIBW_SOME_OPTION: value
-        #   ...
-        # with:
-        #   package-dir: .
-        #   output-dir: wheelhouse
-        #   config-file: "{package}/pyproject.toml"
+        uses: pypa/cibuildwheel@v3.1.4
+        env:
+          CIBW_BUILD: ${{ fromJSON(env.python_version_to_cibw_build)[matrix.python-version] }}
+        with:
+          package-dir: .
+          output-dir: dist
+
+      - name: Install Pyodide Build
+        if: ${{ (matrix.os == 'ubuntu-latest') && (matrix.python-version == env.main-python-version) }}
+        run: |
+          python -m pip install pyodide-build
+          echo EMSCRIPTEN_VERSION=$(pyodide config get emscripten_version) >> $GITHUB_ENV
+
+      - name: Setup Emscripten
+        if: ${{ (matrix.os == 'ubuntu-latest') && (matrix.python-version == env.main-python-version) }}
+        uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: ${{ env.EMSCRIPTEN_VERSION }}
+
+      - name: Build for Pyodide
+        if: ${{ (matrix.os == 'ubuntu-latest') && (matrix.python-version == env.main-python-version) }}
+        run: |
+          python -m build --sdist  
+          pyodide build
 
       - uses: actions/upload-artifact@v4
         with:
-          name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
-          path: ./wheelhouse/*.whl
+          name: dist-${{ matrix.os }}-${{ matrix.python-version }}
+          path: ./dist/*
+
+  gather-dists:
+    runs-on: ubuntu-latest
+    needs: build_wheels
+    if: success() || failure()
+    steps:
+
+      - name: Download reports' artifacts
+        uses: actions/download-artifact@v5
+        with:
+          path: ./artifacts-dl
+
+      - name: Copy artifacts
+        run: |
+          mkdir choreo-dist
+          mkdir choreo-dist/dist
+          find ./artifacts-dl/dist-ubuntu-latest-${{ env.main-python-version }}/ -name '*.tar.gz' -exec cp {} ./choreo-dist/dist \; 
+          find ./artifacts-dl -name '*.whl' -exec cp {} ./pyquickbench-dist/dist \; 
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: choreo-dist
+          path: './choreo-dist/'

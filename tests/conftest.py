@@ -20,7 +20,6 @@ def pytest_sessionstart(session):
     except AssertionError:
         pass
     
-
 def pytest_addoption(parser):
     parser.addoption(
         "--runslow", action="store_true", default=False, help="run slow tests"
